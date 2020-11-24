@@ -1,0 +1,238 @@
+#!ipxe
+#设置各种文件路径默认支持10个,自己修改
+set wim1 /win10newpe64(20201101).wim
+set wim2 /win10newpe64(20201101).wim
+set wim3 /win10newpe64(20201101).wim
+set wim4 /win10newpe64(20201101).wim
+set wim5 /win10newpe64(20201101).wim
+set wim6 /win10newpe64(20201101).wim
+set wim7 /win10newpe64(20201101).wim
+set wim8 /win10newpe64(20201101).wim
+set wim9 /win10newpe64(20201101).wim
+set wim10 /win10newpe64(20201101).wim
+set iso1 /Win10_14393_PE_x86&x64.iso
+set iso2 /pe.iso
+set iso3 /Win10_14393_PE_x86&x64.iso
+set iso4 /Win10_14393_PE_x86&x64.iso
+set iso5 /Win10_14393_PE_x86&x64.iso
+set iso6 /Win10_14393_PE_x86&x64.iso
+set iso7 /Win10_14393_PE_x86&x64.iso
+set iso8 /Win10_14393_PE_x86&x64.iso
+set iso9 /Win10_14393_PE_x86&x64.iso
+set iso10 /Win10_14393_PE_x86&x64.iso
+set img1 /mhdd.img
+set img2 /mhdd.img
+set img3 /mhdd.img
+set img4 /mhdd.img
+set img5 /mhdd.img
+set img6 /mhdd.img
+set img7 /mhdd.img
+set img8 /mhdd.img
+set img9 /mhdd.img
+set img10 /mhdd.img
+
+########################################
+########################################
+#以下可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#修改本菜单的名称(默认是/wimisoimg.txt)
+set scriptfile /wimisoimg.txt
+#修改默认启动的文件类型(wim iso img)
+set ext-default wim
+#修改默认启动的文件序号(1-10)
+set bootfile-default 1
+#设置iso启动默认方式
+set isobootmode memdiskiso
+#set isobootmode sanbootiso
+#设置第一个菜单的超时时间
+set ext-timeout 8000
+#设置第二个选择文件界面菜单的超时时间
+set bootfile-timeout 8000 
+#可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+#设置背景
+#console --x 1024 --y 768
+#console --picture http://boot.ipxe.org/texture.png --left 32 --right 32 --top 32 --bottom 48
+#这句脚本是读取本地文件用，不用管
+ifopen net0
+#同上
+ifstat
+#这个我自己调试用的
+set getfile /app/config/tinycore.ipxe
+
+:boot
+#找不到next-server变量就把dhcp-server的变量值给它
+isset ${next-server} || set next-server ${dhcp-server}
+#找不到proxydhcp/next-server变量就把proxydhcp/dhcp-server的变量值给它
+isset ${proxydhcp/next-server} || set proxydhcp/next-server ${proxydhcp/dhcp-server}
+#如果proxydhcp/next-server变量值存在，那么赋给booturl，不然就使用next-server的变量值
+isset ${proxydhcp/next-server} && set booturl ${proxydhcp/next-server} || set booturl ${next-server}
+#备用 prompt --key 0x02 --timeout 2000 Press Ctrl-B for the iPXE command line... && shell ||
+#设置背景
+console --x 1024 --y 768
+console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --top 32 --bottom 48
+
+:menu
+ menu  iPXE's Boot Menu bootserver: http://${booturl}
+   item --gap --             ------------------------   choose   -----------------------------
+   item wim               boot wimfile
+   item iso               boot isofile
+   item img               boot imgfile
+   item g4dboot        boot g4d
+   item --gap --             ---------------------Advanced options ------------------------
+   item --key c config       Configure settings                                   -- c
+   item --key p pxelinux     Load PXELinux menu                                   -- p
+   item shell                Drop to iPXE shell
+   item reboot               Reboot computer
+   item poweroff           Poweroff computer
+  item --key x exit         Exit iPXE and continue BIOS boot                     -- x  
+  choose --timeout ${ext-timeout} --default ${ext-default} selected ||
+  set ext ${selected} ||
+ iseq ${selected} config && config ||
+ iseq ${selected} pxelinux &&  goto pxelinux ||
+ iseq ${selected} shell && shell ||
+ iseq ${selected} reboot && reboot ||
+ iseq ${selected} poweroff && poweroff ||
+ iseq ${selected} exit && exit ||
+ iseq ${selected} reload && chain  http://${booturl}${scriptfile} ||
+ iseq ${selected} grubfm && kernel  http://${booturl}/grubfm.elf ||
+ iseq ${selected} g4dboot && goto g4dboot
+
+
+
+:boot
+ menu  iPXE's Boot Menu ${ext}file bootserver: http://${booturl}
+   item --gap --             ------------------------   choose  ${ext}file -----------------------------
+   item ${ext}1              bootfile: ${${ext}1}
+   item ${ext}2              bootfile: ${${ext}2}
+   item ${ext}3              bootfile: ${${ext}3}
+   item ${ext}4              bootfile: ${${ext}4} 
+   item ${ext}5              bootfile: ${${ext}5}
+   item ${ext}6              bootfile: ${${ext}6} 
+   item ${ext}7              bootfile: ${${ext}7}  
+   item ${ext}8              bootfile: ${${ext}8}
+   item ${ext}9              bootfile: ${${ext}9} 
+   item ${ext}10            bootfile: ${${ext}10}
+   item menu               back to menu
+  choose --timeout ${bootfile-timeout} --default ${ext}${bootfile-default} selected
+  set sel  ${selected}
+  set bootfile ${${sel}}
+  iseq ${selected} menu && goto menu ||
+  iseq ${ext} wim && goto wimboot ||
+  iseq ${ext} iso && goto iso ||
+  goto ${ext} ||
+:wimboot
+#假如取文件失败就换个地址
+kernel http://${booturl}/app/wimboot/wimboot || goto retryip
+#前方高能！这个ghost.bat最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！取不到说明你没放，会继续启动 
+#如果是我提供的pe，进入系统后会自动执行ghost.bat，ip.txt里面是填ip的
+initrd http://${booturl}/netpe/ip.txt ip.txt || 
+initrd http://${booturl}/netpe/client.cfg client.cfg || 
+initrd http://${booturl}/netpe/p2p.7z p2p.7z || 
+initrd http://${booturl}/netpe/peghost.7z peghost.7z || 
+initrd http://${booturl}/netpe/startup.bat startup.bat || 
+#在bios和efi不同环境取相应的文件
+ iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+ iseq ${platform} efi    && initrd http://${booturl}/app/wimboot/bootmgfw.efi bootmgfw.efi ||
+ iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/biosbcd  bcd ||
+ iseq ${platform} efi    && initrd http://${booturl}/app/wimboot/BCD  bcd ||
+ initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+ iseq ${platform} pcbios && initrd http://${booturl}${bootfile} boot.wim ||
+ iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
+ boot || goto retry
+
+#启动img开始
+:img
+iseq ${platform} pcbios && goto biosbootimg ||
+iseq ${platform} efi && sanboot  --no-describe --drive 0xff http://${booturl}${bootfile}
+boot
+
+
+:biosbootimg
+menu  iPXE's Boot Menu isofile: ${bootfile}
+   item --gap --             ------------------------    PXE TOOL  -----------------------------
+   item sanbootimg               Boot with sanboot
+   item memdiskimg               Boot with memdisk
+   item menu                     back to menu
+choose --timeout 8000 --default ${imgbootmode} selected
+ iseq ${selected} menu && goto menu  ||
+goto ${selected}
+:sanbootimg
+sanboot --drive 0x80 http://${booturl}${bootfile} ||
+boot
+:memdiskimg
+initrd http://${booturl}${bootfile} ||
+kernel ${boot-url}/app/legacy/memdisk ||
+boot
+#启动img结束
+
+
+#启动iso开始
+:iso
+iseq ${platform} pcbios && goto biosbootiso ||
+iseq ${platform} efi && sanboot  --no-describe http://${booturl}${bootfile}
+boot
+
+
+:biosbootiso
+menu  iPXE's Boot Menu isofile: ${bootfile}
+   item --gap --             ------------------------    PXE TOOL  -----------------------------
+   item sanbootiso               Boot with sanboot
+   item memdiskiso               Boot with memdiskboot
+   item menu                     back to menu
+choose --timeout 8000 --default ${isobootmode} selected
+iseq ${selected} menu && goto menu  ||
+goto ${selected}
+:sanbootiso
+sanboot --drive 0xff http://${booturl}${bootfile} ||
+boot
+
+
+:memdiskiso
+initrd http://${booturl}${bootfile} ||
+kernel ${boot-url}/app/legacy/memdisk iso raw ||
+boot
+#启动iso结束
+
+:retry
+console
+echo set Filename 
+read getfile 
+set menu-default gitcloud
+goto start
+
+#如果当前booturl变量值是proxydhcp/next-server，那么就换成next-server，反之亦然，我瞎写的，不知道语法有没有问题
+:retryip
+issq ${booturl} ${proxydhcp/next-server} && set booturl ${next-server} && goto start ||
+set booturl ${proxydhcp/next-server} && goto start
+
+
+
+#下面都是些进入命令行模式，重启，退出，关机之类的，还有些备用项目，不用解释
+:shell
+  echo Type 'exit' to get the back to the menu
+  shell
+  goto start
+
+:failed
+  echo Booting failed, dropping to shell
+  goto shell
+
+:reboot
+  reboot
+
+:exit
+  exit
+
+:config
+  config
+  goto start
+
+:g4dboot
+kernel http://${booturl} /app/legacy/grub.exe
+
+
+
+
+
+
