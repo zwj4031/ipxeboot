@@ -12,7 +12,7 @@ set wim9 /win10newpe64(20201101).wim
 set wim10 /win10newpe64(20201101).wim
 set iso1 /Win10_14393_PE_x86&x64.iso
 set iso2 /pe.iso
-set iso3 /Win10_14393_PE_x86&x64.iso
+set iso3 /sb.iso
 set iso4 /Win10_14393_PE_x86&x64.iso
 set iso5 /Win10_14393_PE_x86&x64.iso
 set iso6 /Win10_14393_PE_x86&x64.iso
@@ -75,10 +75,10 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
 :menu
  menu  iPXE's Boot Menu bootserver: http://${booturl}
    item --gap --             ------------------------   choose   -----------------------------
-   item wim               boot wimfile
-   item iso               boot isofile
-   item img               boot imgfile
-   item g4dboot        boot g4d
+   item wim               Boot wimfile
+   item iso               Boot isofile
+   item img               Boot imgfile
+   item ${platform}boot   Boot ${platform}
    item --gap --             ---------------------Advanced options ------------------------
    item --key c config       Configure settings                                   -- c
    item --key p pxelinux     Load PXELinux menu                                   -- p
@@ -96,7 +96,7 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
  iseq ${selected} exit && exit ||
  iseq ${selected} reload && chain  http://${booturl}${scriptfile} ||
  iseq ${selected} grubfm && kernel  http://${booturl}/grubfm.elf ||
- iseq ${selected} g4dboot && goto g4dboot
+ iseq ${selected} ${platform}boot && goto ${platform}boot ||
 
 
 
@@ -153,6 +153,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------    PXE TOOL  -----------------------------
    item sanbootimg               Boot with sanboot
    item memdiskimg               Boot with memdisk
+   item ${platform}bootimg       Boot with grub
    item menu                     back to menu
 choose --timeout 8000 --default ${imgbootmode} selected
  iseq ${selected} menu && goto menu  ||
@@ -162,7 +163,7 @@ sanboot --drive 0x80 http://${booturl}${bootfile} ||
 boot
 :memdiskimg
 initrd http://${booturl}${bootfile} ||
-kernel ${boot-url}/app/legacy/memdisk ||
+kernel ${boot-url}/app/${platform}/memdisk ||
 boot
 #启动img结束
 
@@ -179,6 +180,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------    PXE TOOL  -----------------------------
    item sanbootiso               Boot with sanboot
    item memdiskiso               Boot with memdiskboot
+   item ${platform}bootiso       Boot with grub 
    item menu                     back to menu
 choose --timeout 8000 --default ${isobootmode} selected
 iseq ${selected} menu && goto menu  ||
@@ -189,8 +191,8 @@ boot
 
 
 :memdiskiso
+kernel ${boot-url}/app/${platform}/memdisk iso raw ||
 initrd http://${booturl}${bootfile} ||
-kernel ${boot-url}/app/legacy/memdisk iso raw ||
 boot
 #启动iso结束
 
@@ -228,9 +230,19 @@ set booturl ${proxydhcp/next-server} && goto start
   config
   goto start
 
-:g4dboot
-kernel http://${booturl} /app/legacy/grub.exe
+:pcbiosbootiso
+iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
+iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (0xff);map --hook;chainloader (255);boot" ||
+boot
 
+:efibootiso
+iseq ${platform} efi && kernel http://${booturl}/app/wimboot/wimboot gui ||
+iseq ${platform} efi && initrd -n bootmgfw.efi http://${booturl}/app/${platform}/BOOTX64.EFI ||
+iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/menu.lst ||
+iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
+boot
 
 
 

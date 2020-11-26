@@ -21,13 +21,13 @@ echo [arch]
 echo 00007=ipxe.efi
 echo [dhcp]
 echo start=1
-echo proxydhcp=0
+echo proxydhcp=1
 echo httpd=1
 echo bind=1
 echo poolsize=998
 echo root=%~dp0
 echo filename=ipxe.bios
-echo altfilename=wimisoimg.txt
+echo altfilename=ipxeboot.txt
 )>%~dp0bin\config.INI
 
 ::::start "" /min %~dp0bin\hfs.exe -c active=yes -a %~dp0bin\myhfs.ini
