@@ -11,7 +11,7 @@ set wim8 /win10newpe64(20201101).wim
 set wim9 /win10newpe64(20201101).wim
 set wim10 /win10newpe64(20201101).wim
 set iso1 /Win10_14393_PE_x86&x64.iso
-set iso2 /pe.iso
+set iso2 /grubfm_multiarch.iso
 set iso3 /sb.iso
 set iso4 /Win10_14393_PE_x86&x64.iso
 set iso5 /Win10_14393_PE_x86&x64.iso
@@ -21,8 +21,8 @@ set iso8 /Win10_14393_PE_x86&x64.iso
 set iso9 /Win10_14393_PE_x86&x64.iso
 set iso10 /Win10_14393_PE_x86&x64.iso
 set img1 /mhdd.img
-set img2 /mhdd.img
-set img3 /mhdd.img
+set img2 /maxdos9.img
+set img3 /6086858.img
 set img4 /mhdd.img
 set img5 /mhdd.img
 set img6 /mhdd.img
@@ -30,12 +30,13 @@ set img7 /mhdd.img
 set img8 /mhdd.img
 set img9 /mhdd.img
 set img10 /mhdd.img
+set vhd1 /grubfm.vhd
 
 ########################################
 ########################################
 #以下可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #修改本菜单的名称(默认是/wimisoimg.txt)
-set scriptfile /wimisoimg.txt
+set scriptfile /ipxeboot.txt
 #修改默认启动的文件类型(wim iso img)
 set ext-default wim
 #修改默认启动的文件序号(1-10)
@@ -71,21 +72,22 @@ isset ${proxydhcp/next-server} && set booturl ${proxydhcp/next-server} || set bo
 #设置背景
 console --x 1024 --y 768
 console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --top 32 --bottom 48
-
+#主菜单
 :menu
  menu  iPXE's Boot Menu bootserver: http://${booturl}
    item --gap --             ------------------------   choose   -----------------------------
    item wim               Boot wimfile
    item iso               Boot isofile
    item img               Boot imgfile
-   item ${platform}boot   Boot ${platform}
+   item vhd               Boot vhdfile
+   item reload            Reload iPXE Menu
    item --gap --             ---------------------Advanced options ------------------------
-   item --key c config       Configure settings                                   -- c
-   item --key p pxelinux     Load PXELinux menu                                   -- p
-   item shell                Drop to iPXE shell
-   item reboot               Reboot computer
-   item poweroff           Poweroff computer
-  item --key x exit         Exit iPXE and continue BIOS boot                     -- x  
+   item --key c config    Configure settings                                   -- c
+   item --key p pxelinux  Load PXELinux menu                                   -- p
+   item shell             Drop to iPXE shell
+   item reboot            Reboot computer
+   item poweroff          Poweroff computer
+  item --key x exit       Exit iPXE and continue BIOS boot                     -- x  
   choose --timeout ${ext-timeout} --default ${ext-default} selected ||
   set ext ${selected} ||
  iseq ${selected} config && config ||
@@ -94,33 +96,37 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
  iseq ${selected} reboot && reboot ||
  iseq ${selected} poweroff && poweroff ||
  iseq ${selected} exit && exit ||
- iseq ${selected} reload && chain  http://${booturl}${scriptfile} ||
- iseq ${selected} grubfm && kernel  http://${booturl}/grubfm.elf ||
+ iseq ${selected} reload && chain http://${booturl}${scriptfile} ||
+ iseq ${selected} grubfm && kernel http://${booturl}/grubfm.elf ||
  iseq ${selected} ${platform}boot && goto ${platform}boot ||
+ 
 
-
-
+#选项启动文件类型后的子菜单(列表)
 :boot
  menu  iPXE's Boot Menu ${ext}file bootserver: http://${booturl}
    item --gap --             ------------------------   choose  ${ext}file -----------------------------
-   item ${ext}1              bootfile: ${${ext}1}
-   item ${ext}2              bootfile: ${${ext}2}
-   item ${ext}3              bootfile: ${${ext}3}
-   item ${ext}4              bootfile: ${${ext}4} 
-   item ${ext}5              bootfile: ${${ext}5}
-   item ${ext}6              bootfile: ${${ext}6} 
-   item ${ext}7              bootfile: ${${ext}7}  
-   item ${ext}8              bootfile: ${${ext}8}
-   item ${ext}9              bootfile: ${${ext}9} 
-   item ${ext}10            bootfile: ${${ext}10}
-   item menu               back to menu
+   item ${ext}1              Bootfile: ${${ext}1}
+   item ${ext}2              Bootfile: ${${ext}2}
+   item ${ext}3              Bootfile: ${${ext}3}
+   item ${ext}4              Bootfile: ${${ext}4} 
+   item ${ext}5              Bootfile: ${${ext}5}
+   item ${ext}6              Bootfile: ${${ext}6} 
+   item ${ext}7              Bootfile: ${${ext}7}  
+   item ${ext}8              Bootfile: ${${ext}8}
+   item ${ext}9              Bootfile: ${${ext}9} 
+   item ${ext}10             Bootfile: ${${ext}10}
+   item menu                 Back to menu
   choose --timeout ${bootfile-timeout} --default ${ext}${bootfile-default} selected
   set sel  ${selected}
   set bootfile ${${sel}}
   iseq ${selected} menu && goto menu ||
   iseq ${ext} wim && goto wimboot ||
-  iseq ${ext} iso && goto iso ||
+  iseq ${ext} iso && goto ${platform}iso ||
+  iseq ${ext} img && goto ${platform}img ||
+  iseq ${ext} vhd && goto ${platform}vhd ||
   goto ${ext} ||
+  
+#wim文件暂时的唯一启动方式 
 :wimboot
 #假如取文件失败就换个地址
 kernel http://${booturl}/app/wimboot/wimboot || goto retryip
@@ -140,27 +146,74 @@ initrd http://${booturl}/netpe/startup.bat startup.bat ||
  iseq ${platform} pcbios && initrd http://${booturl}${bootfile} boot.wim ||
  iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
  boot || goto retry
+ 
+ 
+#legacybios环境下的iso类型文件启动菜单
+:pcbiosiso
+menu  iPXE's Boot Menu isofile: ${bootfile}
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootiso    Boot with sanboot
+   item memdiskiso               Boot with memdiskboot
+   item pcbiosbootiso            Boot with grub
+   item menu                     back to menu
+choose --timeout 8000 --default ${isobootmode} selected
+iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --drive 0xff http://${booturl}${bootfile} ||
+iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+
+#uefi环境下的iso类型文件启动菜单
+:efibootiso
+menu  iPXE's Boot Menu isofile: ${bootfile}
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootiso    Boot with sanboot
+   item efibootiso               Boot with grub 
+   item menu                     back to menu
+choose --timeout 8000 --default ${isobootmode} selected
+iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile}  ||
+iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
+iseq ${selected} menu && goto menu  ||
+goto ${selected} ||
+
+#用memdisk来启动iso(仅legacybios)
+:memdiskiso
+kernel ${boot-url}/app/${platform}/memdisk iso raw ||
+initrd http://${booturl}${bootfile} ||
+boot
+#启动iso结束
 
 #启动img开始
-:img
-iseq ${platform} pcbios && goto biosbootimg ||
-iseq ${platform} efi && sanboot  --no-describe --drive 0xff http://${booturl}${bootfile}
-boot
-
-
-:biosbootimg
+#legacybios环境下img类型文件的启动菜单
+:pcbiosimg
 menu  iPXE's Boot Menu isofile: ${bootfile}
-   item --gap --             ------------------------    PXE TOOL  -----------------------------
-   item sanbootimg               Boot with sanboot
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootimg    Boot with sanboot
    item memdiskimg               Boot with memdisk
+   item ${platform}bootimgfdd    Boot with grub (FDD)
+   item ${platform}bootimghdd    Boot with grub (HDD)
+   item menu                     back to menu
+choose --timeout 8000 --default ${imgbootmode} selected
+iseq ${selected} menu && goto menu  ||
+iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
+iseq ${selected} ${platform}bootimgfdd && set diskmode fd && goto ${platform}bootimg ||
+iseq ${selected} ${platform}bootimghdd && set diskmode hd && goto ${platform}bootimg ||
+goto ${selected} ||
+
+
+#uefi环境下的img类型文件启动菜单
+:efibootimg
+menu  iPXE's Boot Menu imgfile: ${bootfile}
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootimg    Boot with sanboot
    item ${platform}bootimg       Boot with grub
    item menu                     back to menu
 choose --timeout 8000 --default ${imgbootmode} selected
- iseq ${selected} menu && goto menu  ||
-goto ${selected}
-:sanbootimg
-sanboot --drive 0x80 http://${booturl}${bootfile} ||
-boot
+iseq ${selected} menu && goto menu  ||
+iseq ${selected} ${platform}bootimg && sanboot --no-describe http://${booturl}${bootfile} && boot ||
+goto ${selected} ||
+
+
+#用memdisk来启动img(仅legacybios)
 :memdiskimg
 initrd http://${booturl}${bootfile} ||
 kernel ${boot-url}/app/${platform}/memdisk ||
@@ -168,34 +221,36 @@ boot
 #启动img结束
 
 
-#启动iso开始
-:iso
-iseq ${platform} pcbios && goto biosbootiso ||
-iseq ${platform} efi && sanboot  --no-describe http://${booturl}${bootfile}
-boot
-
-
-:biosbootiso
-menu  iPXE's Boot Menu isofile: ${bootfile}
-   item --gap --             ------------------------    PXE TOOL  -----------------------------
-   item sanbootiso               Boot with sanboot
-   item memdiskiso               Boot with memdiskboot
-   item ${platform}bootiso       Boot with grub 
+#启动vhd开始
+#legacybios环境下vhd类型文件的启动菜单
+:pcbiosvhd
+menu  iPXE's Boot Menu vhdfile: ${bootfile}
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootvhd    Boot with sanboot
+   item ${platform}bootvhd       Boot with grub (ramos)
    item menu                     back to menu
-choose --timeout 8000 --default ${isobootmode} selected
+choose --timeout 8000 --default ${imgbootmode} selected
 iseq ${selected} menu && goto menu  ||
-goto ${selected}
-:sanbootiso
-sanboot --drive 0xff http://${booturl}${bootfile} ||
-boot
+iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
+iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
+goto ${selected} ||
+#启动vhd结束
+
+:efivhd
+menu  iPXE's Boot Menu vhdfile: ${bootfile}
+   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item ${platform}sanbootvhd    Boot with sanboot
+   item ${platform}bootvhd       Boot with grub (ramos)
+   item menu                     back to menu
+choose --timeout 8000 --default ${imgbootmode} selected
+iseq ${selected} menu && goto menu  ||
+iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
+iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
+goto ${selected} ||
+#启动vhd结束
 
 
-:memdiskiso
-kernel ${boot-url}/app/${platform}/memdisk iso raw ||
-initrd http://${booturl}${bootfile} ||
-boot
-#启动iso结束
-
+#下面是辅助菜单
 :retry
 console
 echo set Filename 
@@ -244,7 +299,33 @@ iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/men
 iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
 boot
 
+:pcbiosbootimg
+iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
+iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (${diskmode}0);map --hook; root (${diskmode}0);chainloader (${diskmode}0)+1;boot" ||
+boot
 
+:efibootimg
+iseq ${platform} efi && kernel http://${booturl}/app/wimboot/wimboot gui ||
+iseq ${platform} efi && initrd -n bootmgfw.efi http://${booturl}/app/${platform}/BOOTX64.EFI ||
+iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/menu.lst ||
+iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
+boot
+
+:pcbiosbootvhd
+iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
+iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (hd0);map --hook;chainloader (hd0);boot" ||
+boot
+
+:efibootvhd
+iseq ${platform} efi && kernel http://${booturl}/app/wimboot/wimboot gui ||
+iseq ${platform} efi && initrd -n bootmgfw.efi http://${booturl}/app/${platform}/grubfmx64.efi ||
+iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/menu.lst ||
+iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
+boot
 
 
 
