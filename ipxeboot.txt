@@ -30,18 +30,16 @@ set img6 /mhdd.img
 set img7 /mhdd.img
 set img8 /mhdd.img
 set img9 /mhdd.img
-set vhd0 /grubfm.vhd
+set vhd1 /grubfm.vhd
 
 ########################################
 ########################################
 #以下可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #修改本菜单的名称(默认是/wimisoimg.txt)
 set scriptfile /ipxeboot.txt
-
-#修改默认启动的文件类型(wim iso img vhd)
+#修改默认启动的文件类型(wim iso img)
 set ext-default wim
-
-#修改默认启动的文件序号(0-9)
+#修改默认启动的文件序号(1-10)
 set bootfile-default 1
 
 #设置iso启动默认方式
@@ -154,8 +152,7 @@ initrd http://${booturl}/netpe/startup.bat startup.bat ||
 #在bios和efi不同环境取相应的文件
  iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
  iseq ${platform} efi    && initrd http://${booturl}/app/wimboot/bootmgfw.efi bootmgfw.efi ||
- iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/biosbcd  bcd ||
- iseq ${platform} efi    && initrd http://${booturl}/app/wimboot/BCD  bcd ||
+ initrd http://${booturl}/app/wimboot/BCD  BCD ||
  initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
  iseq ${platform} pcbios && initrd http://${booturl}${bootfile} boot.wim ||
  iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
