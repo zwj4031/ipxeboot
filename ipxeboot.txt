@@ -43,15 +43,15 @@ set ext-default wim
 set bootfile-default 1
 
 #设置iso启动默认方式
-set pcbiosisobootmode memdiskiso
+set efi isobootmode memdiskiso
 set efiisobootmode ${platform}sanbootiso
 
 #设置img启动默认方式
-set pcbiosimgbootmode memdiskimg
+set efi imgbootmode memdiskimg
 set efibootmode ${platform}sanbootimg
 
 #设置vhd启动默认方式
-set pcbiosvhdbootmode ${platform}sanbootvhd
+set efi vhdbootmode ${platform}sanbootvhd
 set efivhdbootmode ${platform}sanbootvhd
 
 #设置第一个菜单的超时时间
@@ -150,24 +150,24 @@ initrd http://${booturl}/netpe/p2p.7z p2p.7z ||
 initrd http://${booturl}/netpe/peghost.7z peghost.7z || 
 initrd http://${booturl}/netpe/startup.bat startup.bat || 
 #在bios和efi不同环境取相应的文件
- iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+ iseq ${platform} efi  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
  iseq ${platform} efi    && initrd http://${booturl}/app/wimboot/bootmgfw.efi bootmgfw.efi ||
  initrd http://${booturl}/app/wimboot/BCD  BCD ||
  initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
- iseq ${platform} pcbios && initrd http://${booturl}${bootfile} boot.wim ||
+ iseq ${platform} efi  && initrd http://${booturl}${bootfile} boot.wim ||
  iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
  boot || goto retry
  
  
 #legacybios环境下的iso类型文件启动菜单
-:pcbiosiso
+:efi iso
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
    item --key 0 ${platform}sanbootiso  0. Boot with sanboot 
    item --key 1 memdiskiso                 1. Boot with memdiskboot 
-   item --key 2 pcbiosbootiso            2.  Boot with grub     
+   item --key 2 efi bootiso            2.  Boot with grub     
    item --key 3 menu                     M. back to menu         
-choose --timeout 8000 --default ${pcbiosisobootmode} selected
+choose --timeout 8000 --default ${efi isobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --drive 0xff http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
 iseq ${selected} menu && goto menu ||
@@ -180,7 +180,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --key 0 ${platform}sanbootiso 0. Boot with sanboot
    item --key 1 efibootiso               1. Boot with grub 
    item --key m  menu                  M.  back to menu
-choose --timeout 8000 --default ${pcbiosisobootmode} selected
+choose --timeout 8000 --default ${efi isobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile}  ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
 iseq ${selected} menu && goto menu  ||
@@ -195,7 +195,7 @@ boot
 
 #启动img开始
 #legacybios环境下img类型文件的启动菜单
-:pcbiosimg
+:efi img
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
    item  --key 0 ${platform}sanbootimg    0. Boot with sanboot
@@ -203,7 +203,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item  --key 2 ${platform}bootimgfdd   3. Boot with grub (FDD)
    item  --key 3 ${platform}bootimghdd    4. Boot with grub (HDD)
    item  --key m menu                    M. back to menu
-choose --timeout 8000 --default ${pcbiosimgbootmode} selected
+choose --timeout 8000 --default ${efi imgbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootimgfdd && set diskmode fd && goto ${platform}bootimg ||
@@ -234,13 +234,13 @@ boot
 
 #启动vhd开始
 #legacybios环境下vhd类型文件的启动菜单
-:pcbiosvhd
+:efi vhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
    item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
    item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
    item  --key m menu                     M. back to menu
-choose --timeout 8000 --default ${pcbiosvhdbootmode} selected
+choose --timeout 8000 --default ${efi vhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
@@ -296,11 +296,11 @@ set booturl ${proxydhcp/next-server} && goto start
   config
   goto start
 
-:pcbiosbootiso
-iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
-iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
-iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
-iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (0xff);map --hook;chainloader (255);boot" ||
+:efi bootiso
+iseq ${platform} efi  && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} efi  && initrd http://${booturl}${bootfile} ||
+iseq ${platform} efi  && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} efi  && imgargs grub.exe --config-file="map (rd)+1 (0xff);map --hook;chainloader (255);boot" ||
 boot
 
 :efibootiso
@@ -310,11 +310,11 @@ iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/men
 iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
 boot
 
-:pcbiosbootimg
-iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
-iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
-iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
-iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (${diskmode}0);map --hook; root (${diskmode}0);chainloader (${diskmode}0)+1;boot" ||
+:efi bootimg
+iseq ${platform} efi  && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} efi  && initrd http://${booturl}${bootfile} ||
+iseq ${platform} efi  && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} efi  && imgargs grub.exe --config-file="map (rd)+1 (${diskmode}0);map --hook; root (${diskmode}0);chainloader (${diskmode}0)+1;boot" ||
 boot
 
 :efibootimg
@@ -324,11 +324,11 @@ iseq ${platform} efi && initrd -n menu.lst http://${booturl}/app/${platform}/men
 iseq ${platform} efi && initrd -n boot.iso http://${booturl}${bootfile} ||
 boot
 
-:pcbiosbootvhd
-iseq ${platform} pcbios && && kernel http://${booturl}/app/${platform}/grub.exe ||
-iseq ${platform} pcbios && initrd http://${booturl}${bootfile} ||
-iseq ${platform} pcbios && initrd http://${booturl}/app/${platform}/512 ||
-iseq ${platform} pcbios && imgargs grub.exe --config-file="map (rd)+1 (hd0);map --hook;chainloader (hd0);boot" ||
+:efi bootvhd
+iseq ${platform} efi  && && kernel http://${booturl}/app/${platform}/grub.exe ||
+iseq ${platform} efi  && initrd http://${booturl}${bootfile} ||
+iseq ${platform} efi  && initrd http://${booturl}/app/${platform}/512 ||
+iseq ${platform} efi  && imgargs grub.exe --config-file="map (rd)+1 (hd0);map --hook;chainloader (hd0);boot" ||
 boot
 
 :efibootvhd
