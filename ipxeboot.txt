@@ -1,6 +1,7 @@
 #!ipxe
 #设置各种文件路径默认支持10个,自己修改
-set wim1 /win10newpe64(20201101).wim
+set wim0 /mini.wim
+set wim1 /mini.wim
 set wim2 /win10newpe64(20201101).wim
 set wim3 /win10newpe64(20201101).wim
 set wim4 /win10newpe64(20201101).wim
@@ -9,8 +10,8 @@ set wim6 /win10newpe64(20201101).wim
 set wim7 /win10newpe64(20201101).wim
 set wim8 /win10newpe64(20201101).wim
 set wim9 /win10newpe64(20201101).wim
-set wim10 /win10newpe64(20201101).wim
-set iso1 /Win10_14393_PE_x86&x64.iso
+set iso0 /grubfm_multiarch.iso
+set iso1 /grubfm_multiarch.iso
 set iso2 /grubfm_multiarch.iso
 set iso3 /sb.iso
 set iso4 /Win10_14393_PE_x86&x64.iso
@@ -19,7 +20,7 @@ set iso6 /Win10_14393_PE_x86&x64.iso
 set iso7 /Win10_14393_PE_x86&x64.iso
 set iso8 /Win10_14393_PE_x86&x64.iso
 set iso9 /Win10_14393_PE_x86&x64.iso
-set iso10 /Win10_14393_PE_x86&x64.iso
+set img0 /mhdd.img
 set img1 /mhdd.img
 set img2 /maxdos9.img
 set img3 /6086858.img
@@ -29,17 +30,18 @@ set img6 /mhdd.img
 set img7 /mhdd.img
 set img8 /mhdd.img
 set img9 /mhdd.img
-set img10 /mhdd.img
-set vhd1 /grubfm.vhd
+set vhd0 /grubfm.vhd
 
 ########################################
 ########################################
 #以下可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #修改本菜单的名称(默认是/wimisoimg.txt)
 set scriptfile /ipxeboot.txt
-#修改默认启动的文件类型(wim iso img)
+
+#修改默认启动的文件类型(wim iso img vhd)
 set ext-default wim
-#修改默认启动的文件序号(1-10)
+
+#修改默认启动的文件序号(0-9)
 set bootfile-default 1
 
 #设置iso启动默认方式
@@ -88,11 +90,11 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
 :menu
  menu  iPXE's Boot Menu bootserver: http://${booturl}
    item --gap --             ------------------------   choose   -----------------------------
-   item wim               Boot wimfile
-   item iso               Boot isofile
-   item img               Boot imgfile
-   item vhd               Boot vhdfile
-   item reload            Reload iPXE Menu
+   item --key 0 wim            0.   Boot wimfile
+   item --key 1 iso              1.   Boot isofile
+   item --key 2 img             2.  Boot imgfile
+   item --key 3 vhd             3.  Boot vhdfile
+   item --key r reload         R. Reload iPXE Menu
    item --gap --             ---------------------Advanced options ------------------------
    item --key c config    Configure settings                                   -- c
    item --key p pxelinux  Load PXELinux menu                                   -- p
@@ -116,18 +118,18 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
 #选项启动文件类型后的子菜单(列表)
 :boot
  menu  iPXE's Boot Menu ${ext}file bootserver: http://${booturl}
-   item --gap --             ------------------------   choose  ${ext}file -----------------------------
-   item ${ext}1              Bootfile: ${${ext}1}
-   item ${ext}2              Bootfile: ${${ext}2}
-   item ${ext}3              Bootfile: ${${ext}3}
-   item ${ext}4              Bootfile: ${${ext}4} 
-   item ${ext}5              Bootfile: ${${ext}5}
-   item ${ext}6              Bootfile: ${${ext}6} 
-   item ${ext}7              Bootfile: ${${ext}7}  
-   item ${ext}8              Bootfile: ${${ext}8}
-   item ${ext}9              Bootfile: ${${ext}9} 
-   item ${ext}10             Bootfile: ${${ext}10}
-   item menu                 Back to menu
+   item --gap --             ------------------------ choose  ${ext}file -----------------------------
+   item --key 0 ${ext}0          0. Bootfile:${${ext}0}
+   item --key 1 ${ext}1          1. Bootfile:${${ext}1}
+   item --key 2 ${ext}2          2. Bootfile:${${ext}2}
+   item --key 3 ${ext}3          3. Bootfile:${${ext}3}
+   item --key 4 ${ext}4          4. Bootfile:${${ext}4}
+   item --key 5 ${ext}5          5. Bootfile:${${ext}5}
+   item --key 6 ${ext}6          6. Bootfile:${${ext}6}
+   item --key 7 ${ext}7          7. Bootfile:${${ext}7}
+   item --key 8 ${ext}8          8. Bootfile:${${ext}8}
+   item --key 9 ${ext}9          9. Bootfile:${${ext}9}
+   item --key m menu         M. Back to menu
   choose --timeout ${bootfile-timeout} --default ${ext}${bootfile-default} selected
   set sel  ${selected}
   set bootfile ${${sel}}
@@ -164,10 +166,10 @@ initrd http://${booturl}/netpe/startup.bat startup.bat ||
 :pcbiosiso
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootiso    Boot with sanboot
-   item memdiskiso               Boot with memdiskboot
-   item pcbiosbootiso            Boot with grub
-   item menu                     back to menu
+   item --key 0 ${platform}sanbootiso  0. Boot with sanboot 
+   item --key 1 memdiskiso                 1. Boot with memdiskboot 
+   item --key 2 pcbiosbootiso            2.  Boot with grub     
+   item --key 3 menu                     M. back to menu         
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --drive 0xff http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
@@ -178,9 +180,9 @@ goto ${selected} ||
 :efibootiso
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootiso    Boot with sanboot
-   item efibootiso               Boot with grub 
-   item menu                     back to menu
+   item --key 0 ${platform}sanbootiso 0. Boot with sanboot
+   item --key 1 efibootiso               1. Boot with grub 
+   item --key m  menu                  M.  back to menu
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile}  ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
@@ -199,11 +201,11 @@ boot
 :pcbiosimg
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootimg    Boot with sanboot
-   item memdiskimg               Boot with memdisk
-   item ${platform}bootimgfdd    Boot with grub (FDD)
-   item ${platform}bootimghdd    Boot with grub (HDD)
-   item menu                     back to menu
+   item  --key 0 ${platform}sanbootimg    0. Boot with sanboot
+   item  --key 1 memdiskimg               2. Boot with memdisk
+   item  --key 2 ${platform}bootimgfdd   3. Boot with grub (FDD)
+   item  --key 3 ${platform}bootimghdd    4. Boot with grub (HDD)
+   item  --key m menu                    M. back to menu
 choose --timeout 8000 --default ${pcbiosimgbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
@@ -216,9 +218,9 @@ goto ${selected} ||
 :efibootimg
 menu  iPXE's Boot Menu imgfile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootimg    Boot with sanboot
-   item ${platform}bootimg       Boot with grub
-   item menu                     back to menu
+   item  --key 0 ${platform}sanbootimg    0.Boot with sanboot
+   item  --key 0 ${platform}bootimg       2.Boot with grub
+   item  --key m menu                     M.back to menu
 choose --timeout 8000 --default ${efiimgbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}bootimg && sanboot --no-describe http://${booturl}${bootfile} && boot ||
@@ -238,9 +240,9 @@ boot
 :pcbiosvhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootvhd    Boot with sanboot
-   item ${platform}bootvhd       Boot with grub (ramos)
-   item menu                     back to menu
+   item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
+   item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
+   item  --key m menu                     M. back to menu
 choose --timeout 8000 --default ${pcbiosvhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
@@ -251,9 +253,9 @@ goto ${selected} ||
 :efivhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item ${platform}sanbootvhd    Boot with sanboot
-   item ${platform}bootvhd       Boot with grub (ramos)
-   item menu                     back to menu
+   item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
+   item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
+   item  --key m menu                     M. back to menu
 choose --timeout 8000 --default ${efivhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
