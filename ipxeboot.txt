@@ -41,14 +41,26 @@ set scriptfile /ipxeboot.txt
 set ext-default wim
 #修改默认启动的文件序号(1-10)
 set bootfile-default 1
+
 #设置iso启动默认方式
-set isobootmode memdiskiso
-#set isobootmode sanbootiso
+set pcbiosisobootmode memdiskiso
+set efiisobootmode ${platform}sanbootiso
+
+#设置img启动默认方式
+set pcbiosimgbootmode memdiskimg
+set efibootmode ${platform}sanbootimg
+
+#设置vhd启动默认方式
+set pcbiosvhdbootmode ${platform}sanbootvhd
+set efivhdbootmode ${platform}sanbootvhd
+
 #设置第一个菜单的超时时间
 set ext-timeout 8000
 #设置第二个选择文件界面菜单的超时时间
 set bootfile-timeout 8000 
 #可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+########################################
+########################################
 
 
 #设置背景
@@ -156,7 +168,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item memdiskiso               Boot with memdiskboot
    item pcbiosbootiso            Boot with grub
    item menu                     back to menu
-choose --timeout 8000 --default ${isobootmode} selected
+choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --drive 0xff http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
 iseq ${selected} menu && goto menu ||
@@ -169,7 +181,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item ${platform}sanbootiso    Boot with sanboot
    item efibootiso               Boot with grub 
    item menu                     back to menu
-choose --timeout 8000 --default ${isobootmode} selected
+choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile}  ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
 iseq ${selected} menu && goto menu  ||
@@ -192,7 +204,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item ${platform}bootimgfdd    Boot with grub (FDD)
    item ${platform}bootimghdd    Boot with grub (HDD)
    item menu                     back to menu
-choose --timeout 8000 --default ${imgbootmode} selected
+choose --timeout 8000 --default ${pcbiosimgbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootimgfdd && set diskmode fd && goto ${platform}bootimg ||
@@ -207,7 +219,7 @@ menu  iPXE's Boot Menu imgfile: ${bootfile}
    item ${platform}sanbootimg    Boot with sanboot
    item ${platform}bootimg       Boot with grub
    item menu                     back to menu
-choose --timeout 8000 --default ${imgbootmode} selected
+choose --timeout 8000 --default ${efiimgbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}bootimg && sanboot --no-describe http://${booturl}${bootfile} && boot ||
 goto ${selected} ||
@@ -229,7 +241,7 @@ menu  iPXE's Boot Menu vhdfile: ${bootfile}
    item ${platform}sanbootvhd    Boot with sanboot
    item ${platform}bootvhd       Boot with grub (ramos)
    item menu                     back to menu
-choose --timeout 8000 --default ${imgbootmode} selected
+choose --timeout 8000 --default ${pcbiosvhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
@@ -242,7 +254,7 @@ menu  iPXE's Boot Menu vhdfile: ${bootfile}
    item ${platform}sanbootvhd    Boot with sanboot
    item ${platform}bootvhd       Boot with grub (ramos)
    item menu                     back to menu
-choose --timeout 8000 --default ${imgbootmode} selected
+choose --timeout 8000 --default ${efivhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
