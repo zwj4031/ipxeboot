@@ -13,8 +13,8 @@ set wim8 /win10newpe64(20201101).wim
 set wim9 /win10newpe64(20201101).wim
 set iso0 /grubfm_multiarch.iso
 set iso1 /xp.iso
-set iso2 /grubfm_multiarch.iso
-set iso3 /sb.iso
+set iso2 /98six.iso
+set iso3 /YlmF_Win2003_R2.iso
 set iso4 /Win10_14393_PE_x86&x64.iso
 set iso5 /Win10_14393_PE_x86&x64.iso
 set iso6 /Win10_14393_PE_x86&x64.iso
@@ -31,15 +31,17 @@ set img6 /mhdd.img
 set img7 /mhdd.img
 set img8 /mhdd.img
 set img9 /mhdd.img
-set vhd1 /grubfm.vhd
+set vhd0 /ventoyx.vhd
+set vhd1 /ventoyx.vhd
 ##############初级入门用户修改区域结束############
 
 ##############初级止步！中级进阶用户修改区域######
-##射入pe的文件暂时可射5个，5个文件在/app/inject目录下，看得懂脚本的可以射数个(不能为空~会蓝屏!)
+##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要先效取消文件名前面的!)
+##看得懂脚本的可以射数个(不能为空~会蓝屏!)
 ##0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)
-set inject0 winpeshl.ini
+set inject0 !winpeshl.ini
 ##1.这个例子是winpeshl.ini负责启动下面这个startup.bat
-set inject1 startup.bat
+set inject1 !startup.bat
 ##2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
 ##3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
@@ -80,7 +82,7 @@ ifopen net0
 #同上
 ifstat
 #这个我自己调试用的
-set getfile /app/config/tinycore.ipxe
+set getfile /ipxeboot.txt
 :boot
 #找不到next-server变量就把dhcp-server的变量值给它
 isset ${next-server} || set next-server ${dhcp-server}
@@ -101,7 +103,7 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item --key 1 iso            1.  Boot isofile
    item --key 2 img            2.  Boot imgfile
    item --key 3 vhd            3.  Boot vhdfile
-   item --key r reload         R. Reload iPXE Menu
+   item --key r reload         R.  Reload iPXE Menu
    item --gap --             ---------------------Advanced options ------------------------
    item --key c config    Configure settings                                   -- c
    item --key p pxelinux  Load PXELinux menu                                   -- p
@@ -165,15 +167,14 @@ iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inje
 iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
 iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
 iseq ${platform} efi && initrd -n ${inject5} http://${booturl}/app/inject/${inject5} || 
-
 #在bios和efi不同环境取相应的文件
- iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
- iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
- initrd http://${booturl}/app/wimboot/BCD  BCD ||
- initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
- iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
- iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
- boot || goto retry
+iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
+initrd http://${booturl}/app/wimboot/BCD  BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
+iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
+boot || goto retry
  
  
 #legacybios环境下的iso类型文件启动菜单
@@ -182,7 +183,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
    item --key 0 ${platform}sanbootiso  0. Boot with sanboot 
    item --key 1 memdiskiso             1. Boot with memdiskboot 
-   item --key 2 pcbiosbootiso          2.  Boot with grub     
+   item --key 2 pcbiosbootiso          2. Boot with grub     
    item --key 3 menu                   M. back to menu       
   
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
@@ -228,7 +229,6 @@ iseq ${selected} ${platform}bootimgfdd && set diskmode fd && goto ${platform}boo
 iseq ${selected} ${platform}bootimghdd && set diskmode hd && goto ${platform}bootimg ||
 goto ${selected} ||
 
-
 #uefi环境下的img类型文件启动菜单
 :efiimg
 menu  iPXE's Boot Menu imgfile: ${bootfile}
@@ -248,7 +248,6 @@ initrd http://${booturl}${bootfile} ||
 kernel ${boot-url}/app/${platform}/memdisk ||
 boot
 #启动img结束
-
 
 #启动vhd开始
 #legacybios环境下vhd类型文件的启动菜单
@@ -278,7 +277,6 @@ iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
 goto ${selected} ||
 #启动vhd结束
 
-
 #下面是辅助菜单
 :retry
 console
@@ -286,34 +284,26 @@ echo set Filename
 read getfile 
 set menu-default gitcloud
 goto start
-
 #如果当前booturl变量值是proxydhcp/next-server，那么就换成next-server，反之亦然，我瞎写的，不知道语法有没有问题
 :retryip
 issq ${booturl} ${proxydhcp/next-server} && set booturl ${next-server} && goto start ||
 set booturl ${proxydhcp/next-server} && goto start
-
-
-
 #下面都是些进入命令行模式，重启，退出，关机之类的，还有些备用项目，不用解释
 :shell
   echo Type 'exit' to get the back to the menu
   shell
   goto start
-
 :failed
   echo Booting failed, dropping to shell
   goto shell
-
 :reboot
   reboot
-
 :exit
   exit
-
 :config
   config
   goto start
-
+##################以下是执行启动过程##################
 :pcbiosbootiso
 kernel http://${booturl}/app/${platform}/grub.exe ||
 initrd http://${booturl}${bootfile} ||
