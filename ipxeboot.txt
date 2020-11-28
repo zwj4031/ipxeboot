@@ -2,9 +2,9 @@
 ##############初级入门用户修改区域################
 #设置各种文件路径默认支持10个,自己修改
 set wim0 /mini.wim
-set wim1 /mini.wim
+set wim1 /win10newpe64(20201101).wim
 set wim2 /win10newpe64(20201101).wim
-set wim3 /win10newpe64(20201101).wim
+set wim3 /dongzhangramos7.wim
 set wim4 /win10newpe64(20201101).wim
 set wim5 /win10newpe64(20201101).wim
 set wim6 /win10newpe64(20201101).wim
@@ -13,7 +13,7 @@ set wim8 /win10newpe64(20201101).wim
 set wim9 /win10newpe64(20201101).wim
 set iso0 /grubfm_multiarch.iso
 set iso1 /xp.iso
-set iso2 /98six.iso
+set iso2 /netpe_multiarch.iso
 set iso3 /YlmF_Win2003_R2.iso
 set iso4 /Win10_14393_PE_x86&x64.iso
 set iso5 /Win10_14393_PE_x86&x64.iso
@@ -39,8 +39,8 @@ set vhd1 /ventoyx.vhd
 ##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要先效取消文件名前面的!)
 ##看得懂脚本的可以射数个(不能为空~会蓝屏!)
 ##0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)
-set inject0 !winpeshl.ini
-##1.这个例子是winpeshl.ini负责启动下面这个startup.bat
+set inject0 !winpeshl.ini ##0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)
+##1.这个例子是winpeshl.ini负责启动下面这 个startup.bat
 set inject1 !startup.bat
 ##2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
@@ -53,13 +53,15 @@ set inject5 cgi64.exe
 ##############中级进阶用户修改区域结束###########
 
 ##############中级止步!高级秃顶用户修改区域######
-#以下可不用修改!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#修改本菜单的名称(默认是/wimisoimg.txt)
+#修改本菜单的名称(默认是/ipxeboot.txt)
 set scriptfile /ipxeboot.txt
 #修改默认启动的文件类型(wim iso img)
 set ext-default wim
-#修改默认启动的文件序号(1-10)
-set bootfile-default 1
+#修改各类型默认启动的文件序号(0-9)
+set wimbootfile-default 0
+set isobootfile-default 2
+set imgbootfile-default 0
+set vhdbootfile-default 0
 #设置iso启动默认方式
 set pcbiosisobootmode memdiskiso
 set efiisobootmode ${platform}sanbootiso
@@ -110,18 +112,18 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item shell             Drop to iPXE shell
    item reboot            Reboot computer
    item poweroff          Poweroff computer
-  item --key x exit       Exit iPXE and continue BIOS boot                     -- x  
-  choose --timeout ${ext-timeout} --default ${ext-default} selected ||
-  set ext ${selected} ||
- iseq ${selected} config && config ||
- iseq ${selected} pxelinux &&  goto pxelinux ||
- iseq ${selected} shell && shell ||
- iseq ${selected} reboot && reboot ||
- iseq ${selected} poweroff && poweroff ||
- iseq ${selected} exit && exit ||
- iseq ${selected} reload && chain http://${booturl}${scriptfile} ||
- iseq ${selected} grubfm && kernel http://${booturl}/grubfm.elf ||
- iseq ${selected} ${platform}boot && goto ${platform}boot ||
+   item --key x exit       Exit iPXE and continue BIOS boot                     -- x  
+choose --timeout ${ext-timeout} --default ${ext-default} selected ||
+set ext ${selected} ||
+iseq ${selected} config && config ||
+iseq ${selected} pxelinux &&  goto pxelinux ||
+iseq ${selected} shell && shell ||
+iseq ${selected} reboot && reboot ||
+iseq ${selected} poweroff && poweroff ||
+iseq ${selected} exit && exit ||
+iseq ${selected} reload && chain http://${booturl}${scriptfile} ||
+iseq ${selected} grubfm && kernel http://${booturl}/grubfm.elf ||
+iseq ${selected} ${platform}boot && goto ${platform}boot ||
  
 
 #选项启动文件类型后的子菜单(列表)
@@ -139,7 +141,7 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item --key 8 ${ext}8          8. Bootfile:${${ext}8}
    item --key 9 ${ext}9          9. Bootfile:${${ext}9}
    item --key m menu             M. Back to menu
-  choose --timeout ${bootfile-timeout} --default ${ext}${bootfile-default} selected
+  choose --timeout ${bootfile-timeout} --default ${ext}${${ext}bootfile-default} selected
   set sel  ${selected}
   set bootfile ${${sel}}
   iseq ${selected} menu && goto menu ||
@@ -153,8 +155,8 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
 :wimboot
 #假如取文件失败就换个地址
 kernel http://${booturl}/app/wimboot/wimboot || goto retryip
-#前方高能！这个ghost.bat最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！取不到说明你没放，会继续启动 
-#上面这段话忽略!!
+#前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
+#只是启动个pe用的上面这段话请忽略!!
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} ${inject0} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} ${inject1} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inject2} || 
@@ -253,10 +255,10 @@ boot
 #legacybios环境下vhd类型文件的启动菜单
 :pcbiosvhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
-   item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
-   item  --key m menu                     M. back to menu
+	item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+	item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
+	item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
+	item  --key m menu                     M. back to menu
 choose --timeout 8000 --default ${pcbiosvhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
@@ -266,10 +268,10 @@ goto ${selected} ||
 
 :efivhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
-   item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
-   item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
-   item  --key m menu                     M. back to menu
+	item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+	item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
+	item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
+	item  --key m menu                     M. back to menu
 choose --timeout 8000 --default ${efivhdbootmode} selected
 iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
