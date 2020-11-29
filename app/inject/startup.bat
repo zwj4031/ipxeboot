@@ -1,10 +1,13 @@
 @echo off
 :::创建符号链接，避免32位程序运行不正常
 mklink %temp%\cmd.exe  C:\windows\system32\cmd.exe
-
+set root=X:\windows\system32
+%root%\pecmd.exe LINK %Desktop%\ghost64,%root%\ghost64.exe
+%root%\pecmd.exe LINK %Desktop%\netcopy64,%root%\netcopy64.exe
 @echo 检测系统目录下是否存在ip.txt
 if exist X:\windows\system32\ip.txt @echo 文件存在.准备提取...&&goto txtip
 if not exist X:\windows\system32\ip.txt @echo 文件不存在.dhcp作为服务器地址...&&goto dhcpip
+
 
 :::检测服务器文件并退出
 :runtask
