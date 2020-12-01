@@ -216,7 +216,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}sanbootiso 0. Boot with sanboot
    item --key 1 efibootiso            1. Boot with grub 
-   item --key m  menu                 M.  back to menu
+   item --key m  menu                 M. back to menu
 choose --timeout 8000 --default ${efiisobootmode} selected
 iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile}  ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
@@ -445,12 +445,12 @@ boot
 :pcbiosinstall
 set net0/gateway 0.0.0.0
 set keep-san 1
-sanhook iscsi:${bootfile}
+sanhook iscsi:${iscsiurl}::::${iqn}
 boot
 
 :efiinstall
 set net0/gateway 0.0.0.0
 set keep-san 1
-sanhook iscsi:${bootfile}
+sanhook iscsi:${iscsiurl}::::${iqn}
 boot
 
