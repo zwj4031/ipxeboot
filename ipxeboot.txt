@@ -33,15 +33,17 @@ set img8 /mhdd.img
 set img9 /mhdd.img
 set vhd0 /ventoyx.vhd
 set vhd1 /ventoyx.vhd
+set iqn0 iqn.1991-05.com.microsoft:target1
+set iqn1 iqn.1991-05.com.microsoft:target2
 ##############初级入门用户修改区域结束############
 
 ##############初级止步！中级进阶用户修改区域######
 ##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要先效取消文件名前面的!)
 ##看得懂脚本的可以射数个(不能为空~会蓝屏!)
 ##0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)
-set inject0 !winpeshl.ini
+set inject0 winpeshl.ini
 ##1.这个例子是winpeshl.ini负责启动下面这 个startup.bat
-set inject1 !startup.bat
+set inject1 startup.bat
 ##2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
 ##3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
@@ -53,6 +55,8 @@ set inject5 cgi64.exe
 ##############中级进阶用户修改区域结束###########
 
 ##############中级止步!高级秃顶用户修改区域######
+#修改iscsi server的地址(默认是next-server)
+#set iscsiurl 169.254.1.1
 #修改本菜单的名称(默认是/ipxeboot.txt)
 set scriptfile /ipxeboot.txt
 #修改默认启动的文件类型(wim iso img)
@@ -62,6 +66,10 @@ set wimbootfile-default 0
 set isobootfile-default 2
 set imgbootfile-default 0
 set vhdbootfile-default 0
+set iqnbootfile-default 0
+#设置wim启动默认方式
+set pcbioswimbootmode wimboot
+set efiwimbootbootmode wimboot
 #设置iso启动默认方式
 set pcbiosisobootmode memdiskiso
 set efiisobootmode ${platform}sanbootiso
@@ -71,14 +79,17 @@ set efiimgbootmode ${platform}sanbootimg
 #设置vhd启动默认方式
 set pcbiosvhdbootmode ${platform}sanbootvhd
 set efivhdbootmode ${platform}sanbootvhd
+#设置IQN启动默认方式
+set pcbiosiqnbootmode ${platform}bootpe
+set efiiqnbootmode ${platform}install
 #设置第一个菜单的超时时间
 set ext-timeout 8000
 #设置第二个选择文件界面菜单的超时时间
 set bootfile-timeout 8000 
 ##############高级秃顶用户修改区域结束######
 
-################系统设置开始##################
-#设置背景
+################系统设置开始####################
+#设置背景                                                                  
 #这句脚本是读取本地文件用，不用管
 ifopen net0
 #同上
@@ -93,6 +104,8 @@ isset ${proxydhcp/next-server} || set proxydhcp/next-server ${proxydhcp/dhcp-ser
 #如果proxydhcp/next-server变量值存在，那么赋给booturl，不然就使用next-server的变量值
 isset ${proxydhcp/next-server} && set booturl ${proxydhcp/next-server} || set booturl ${next-server}
 #备用 prompt --key 0x02 --timeout 2000 Press Ctrl-B for the iPXE command line... && shell ||
+#没有设置iscsiurl就设置为booturl
+isset ${iscsiurl} || set iscsiurl ${booturl}
 console --x 1024 --y 768
 console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --top 32 --bottom 48
 ################系统设置结束##################
@@ -100,18 +113,20 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
 #主菜单
 :menu
  menu  iPXE's Boot Menu bootserver: http://${booturl}
-   item --gap --             ------------------------   choose   -----------------------------
+   item --gap --             --------------------- Choose BootFile -----------------------------
    item --key 0 wim            0.  Boot wimfile
    item --key 1 iso            1.  Boot isofile
    item --key 2 img            2.  Boot imgfile
    item --key 3 vhd            3.  Boot vhdfile
+   item --gap --             --------------------- Choose IscsiBoot --------------------------
+   item --key i iqn            I.  Boot IQN
+   item --gap --             --------------------- Advanced options ------------------------
    item --key r reload         R.  Reload iPXE Menu
-   item --gap --             ---------------------Advanced options ------------------------
-   item --key c config    Configure settings                                   -- c
-   item --key p pxelinux  Load PXELinux menu                                   -- p
-   item shell             Drop to iPXE shell
-   item reboot            Reboot computer
-   item poweroff          Poweroff computer
+   item --key c config   	   Configure settings                                   -- c
+   item --key p pxelinux       Load PXELinux menu                                   -- p
+   item shell                  Drop to iPXE shell
+   item reboot                 Reboot computer
+   item poweroff               Poweroff computer
    item --key x exit       Exit iPXE and continue BIOS boot                     -- x  
 choose --timeout ${ext-timeout} --default ${ext-default} selected ||
 set ext ${selected} ||
@@ -130,59 +145,60 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
 :boot
  menu  iPXE's Boot Menu ${ext}file bootserver: http://${booturl}
    item --gap --             ------------------------ choose  ${ext}file -----------------------------
-   item --key 0 ${ext}0          0. Bootfile:${${ext}0}
-   item --key 1 ${ext}1          1. Bootfile:${${ext}1}
-   item --key 2 ${ext}2          2. Bootfile:${${ext}2}
-   item --key 3 ${ext}3          3. Bootfile:${${ext}3}
-   item --key 4 ${ext}4          4. Bootfile:${${ext}4}
-   item --key 5 ${ext}5          5. Bootfile:${${ext}5}
-   item --key 6 ${ext}6          6. Bootfile:${${ext}6}
-   item --key 7 ${ext}7          7. Bootfile:${${ext}7}
-   item --key 8 ${ext}8          8. Bootfile:${${ext}8}
-   item --key 9 ${ext}9          9. Bootfile:${${ext}9}
+   item --key 0 ${ext}0          0. Boot:${${ext}0}
+   item --key 1 ${ext}1          1. Boot:${${ext}1}
+   item --key 2 ${ext}2          2. Boot:${${ext}2}
+   item --key 3 ${ext}3          3. Boot:${${ext}3}
+   item --key 4 ${ext}4          4. Boot:${${ext}4}
+   item --key 5 ${ext}5          5. Boot:${${ext}5}
+   item --key 6 ${ext}6          6. Boot:${${ext}6}
+   item --key 7 ${ext}7          7. Boot:${${ext}7}
+   item --key 8 ${ext}8          8. Boot:${${ext}8}
+   item --key 9 ${ext}9          9. Boot:${${ext}9}
    item --key m menu             M. Back to menu
   choose --timeout ${bootfile-timeout} --default ${ext}${${ext}bootfile-default} selected
   set sel  ${selected}
   set bootfile ${${sel}}
   iseq ${selected} menu && goto menu ||
-  iseq ${ext} wim && goto wimboot ||
+  iseq ${ext} wim && goto ${platform}wim ||
   iseq ${ext} iso && goto ${platform}iso ||
   iseq ${ext} img && goto ${platform}img ||
   iseq ${ext} vhd && goto ${platform}vhd ||
+  iseq ${ext} iqn && goto ${platform}iqn ||
   goto ${ext} ||
-  
-#wim文件暂时的唯一启动方式 
-:wimboot
-#假如取文件失败就换个地址
-kernel http://${booturl}/app/wimboot/wimboot || goto retryip
-#前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
-#只是启动个pe用的上面这段话请忽略!!
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} ${inject0} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} ${inject1} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inject2} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
-iseq ${platform} efi && initrd -n ${inject0} http://${booturl}/app/inject/${inject0} || 
-iseq ${platform} efi && initrd -n ${inject1} http://${booturl}/app/inject/${inject1} || 
-iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 
-iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
-iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
-iseq ${platform} efi && initrd -n ${inject5} http://${booturl}/app/inject/${inject5} || 
-#在bios和efi不同环境取相应的文件
-iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
-iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
-initrd http://${booturl}/app/wimboot/BCD  BCD ||
-initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
-iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
-iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
-boot || goto retry
  
+#wim类型文件启动菜单
+:pcbioswimboot
+menu  iPXE's Boot Menu wimfile: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 0 wimboot                0. Boot with wimboot 
+   item --key 1 wimboot-inject         1. Boot with wimboot (inject files)
+   item --key 3 menu                   M. back to menu       
+  
+choose --timeout 8000 --default ${${platform}wimbootmode} selected
+iseq ${selected} wimboot && goto wimboot ||
+iseq ${selected} wimboot-inject && goto wimboot-inject ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+  
+:efiwimboot
+menu  iPXE's Boot Menu wimfile: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 0 wimboot                0. Boot with wimboot 
+   item --key 1 wimboot-inject         1. Boot with wimboot (inject files)
+   item --key 3 menu                   M. back to menu       
+  
+choose --timeout 8000 --default ${${platform}wimbootmode} selected
+iseq ${selected} wimboot && goto wimboot ||
+iseq ${selected} wimboot-inject && goto wimboot-inject ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+    
  
 #legacybios环境下的iso类型文件启动菜单
 :pcbiosiso
 menu  iPXE's Boot Menu isofile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}sanbootiso  0. Boot with sanboot 
    item --key 1 memdiskiso             1. Boot with memdiskboot 
    item --key 2 pcbiosbootiso          2. Boot with grub     
@@ -197,7 +213,7 @@ goto ${selected} ||
 #uefi环境下的iso类型文件启动菜单
 :efiiso
 menu  iPXE's Boot Menu isofile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}sanbootiso 0. Boot with sanboot
    item --key 1 efibootiso            1. Boot with grub 
    item --key m  menu                 M.  back to menu
@@ -218,7 +234,7 @@ boot
 #legacybios环境下img类型文件的启动菜单
 :pcbiosimg
 menu  iPXE's Boot Menu isofile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item  --key 0 ${platform}sanbootimg    0. Boot with sanboot
    item  --key 1 memdiskimg               2. Boot with memdisk
    item  --key 2 ${platform}bootimgfdd    3. Boot with grub (FDD)
@@ -234,7 +250,7 @@ goto ${selected} ||
 #uefi环境下的img类型文件启动菜单
 :efiimg
 menu  iPXE's Boot Menu imgfile: ${bootfile}
-   item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item  --key 0 ${platform}sanbootimg    0.Boot with sanboot
    item  --key 0 ${platform}bootimg       2.Boot with grub
    item  --key m menu                     M.back to menu
@@ -243,41 +259,72 @@ iseq ${selected} menu && goto menu  ||
 iseq ${selected} ${platform}bootimg && sanboot --no-describe http://${booturl}${bootfile} && boot ||
 goto ${selected} ||
 
-
-#用memdisk来启动img(仅legacybios)
-:memdiskimg
-initrd http://${booturl}${bootfile} ||
-kernel ${boot-url}/app/${platform}/memdisk ||
-boot
-#启动img结束
-
-#启动vhd开始
-#legacybios环境下vhd类型文件的启动菜单
+#vhd类型文件的启动菜单
 :pcbiosvhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
-	item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
 	item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
 	item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
 	item  --key m menu                     M. back to menu
-choose --timeout 8000 --default ${pcbiosvhdbootmode} selected
+choose --timeout 8000 --default ${${platform}vhdbootmode} selected
+iseq ${selected} pcbiossanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
+iseq ${selected} pcbiosbootvhd && goto pcbiosbootvhd ||
+iseq ${selected} efisanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
+iseq ${selected} efibootvhd && goto efibootvhd ||
 iseq ${selected} menu && goto menu  ||
-iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
-iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
 goto ${selected} ||
 #启动vhd结束
-
+ 
 :efivhd
 menu  iPXE's Boot Menu vhdfile: ${bootfile}
-	item --gap --             ------------------------     bootfile:${bootfile} -----------------------------
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
 	item  --key 0 ${platform}sanbootvhd    0. Boot with sanboot
 	item  --key 1 ${platform}bootvhd       1. Boot with grub (ramos)
 	item  --key m menu                     M. back to menu
-choose --timeout 8000 --default ${efivhdbootmode} selected
+choose --timeout 8000 --default ${${platform}vhdbootmode} selected
+iseq ${selected} pcbiossanbootvhd && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
+iseq ${selected} pcbiosbootvhd && goto pcbiosbootvhd ||
+iseq ${selected} efisanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
+iseq ${selected} efibootvhd && goto efibootvhd ||
 iseq ${selected} menu && goto menu  ||
-iseq ${selected} ${platform}sanbootvhd && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} && boot ||
-iseq ${selected} ${platform}bootvhd && goto ${platform}bootvhd ||
 goto ${selected} ||
-#启动vhd结束
+#启动vhd结束 
+
+
+#iscsi文件启动菜单
+:pcbiosiqn
+menu  iPXE's Boot Menu boot: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 1 ${platform}bootpe   0. Boot PE from iscsi server ${iscsiurl}
+   item --key 0 ${platform}bootwin  1. Boot Win from iscsi server ${iscsiurl}
+   item --key 1 ${platform}install  2. Install Win to iscsi server ${iscsiurl}
+   item --key 3 menu                M. back to menu       
+ choose --timeout 8000 --default ${${platform}iscsibootmode} selected
+iseq ${selected} pcbiosbootpe && set keep-san 1 && sanboot --no-describe --drive 0x80 iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} pcbiosbootwin && set keep-san 1 && sanboot --drive 0x80 iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} pcbiosinstall && goto ${platform}install ||
+iseq ${selected} efibootpe && set keep-san 1 && sanboot --no-describe iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} efibootwin && set keep-san 1 && sanboot iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} efiinstall && goto ${platform}install ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+
+:efiiqn
+menu  iPXE's Boot Menu boot: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 1 ${platform}bootpe   0. Boot PE from iscsi server ${iscsiurl}
+   item --key 0 ${platform}bootwin  1. Boot Win from iscsi server ${iscsiurl}
+   item --key 1 ${platform}install  2. Install Win to iscsi server ${iscsiurl}
+   item --key 3 menu                M. back to menu       
+ choose --timeout 8000 --default ${${platform}iscsibootmode} selected
+iseq ${selected} pcbiosbootpe && set keep-san 1 && sanboot --no-describe --drive 0x80 iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} pcbiosbootwin && set keep-san 1 && sanboot --drive 0x80 iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} pcbiosinstall && goto ${platform}install ||
+iseq ${selected} efibootpe && set keep-san 1 && sanboot --no-describe iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} efibootwin && set keep-san 1 && sanboot iscsi:${iscsiurl}::::${iqn} ||
+iseq ${selected} efiinstall && goto ${platform}install ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
 
 #下面是辅助菜单
 :retry
@@ -306,6 +353,46 @@ set booturl ${proxydhcp/next-server} && goto start
   config
   goto start
 ##################以下是执行启动过程##################
+
+:wimboot
+#假如取文件失败就换个地址
+kernel http://${booturl}/app/wimboot/wimboot || goto retryip
+#在bios和efi不同环境取相应的文件
+iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
+initrd http://${booturl}/app/wimboot/BCD  BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
+iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
+boot || goto retry
+
+:wimboot-inject
+#假如取文件失败就换个地址
+kernel http://${booturl}/app/wimboot/wimboot || goto retryip
+#前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
+#只是启动个pe用的上面这段话请忽略!!
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} ${inject0} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} ${inject1} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inject2} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
+iseq ${platform} efi && initrd -n ${inject0} http://${booturl}/app/inject/${inject0} || 
+iseq ${platform} efi && initrd -n ${inject1} http://${booturl}/app/inject/${inject1} || 
+iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 
+iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
+iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
+iseq ${platform} efi && initrd -n ${inject5} http://${booturl}/app/inject/${inject5} || 
+#在bios和efi不同环境取相应的文件
+iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
+initrd http://${booturl}/app/wimboot/BCD  BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
+iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
+boot || goto retry
+ 
+
 :pcbiosbootiso
 kernel http://${booturl}/app/${platform}/grub.exe ||
 initrd http://${booturl}${bootfile} ||
@@ -334,6 +421,12 @@ initrd -n menu.lst http://${booturl}/app/${platform}/menu.lst ||
 initrd -n boot.iso http://${booturl}${bootfile} ||
 boot
 
+#用memdisk来启动img(仅legacybios)
+:memdiskimg
+initrd http://${booturl}${bootfile} ||
+kernel ${boot-url}/app/${platform}/memdisk ||
+boot
+#启动img结束
 :pcbiosbootvhd
 kernel http://${booturl}/app/${platform}/grub.exe ||
 initrd http://${booturl}${bootfile} ||
@@ -349,4 +442,15 @@ initrd -n boot.iso http://${booturl}${bootfile} ||
 boot
 
 
+:pcbiosinstall
+set net0/gateway 0.0.0.0
+set keep-san 1
+sanhook iscsi:${bootfile}
+boot
+
+:efiinstall
+set net0/gateway 0.0.0.0
+set keep-san 1
+sanhook iscsi:${bootfile}
+boot
 
