@@ -205,7 +205,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --key 3 menu                   M. back to menu       
   
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
-iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --drive 0xff http://${booturl}${bootfile} ||
+iseq ${selected} ${platform}sanbootiso && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}bootiso && goto ${platform}bootiso ||
 iseq ${selected} menu && goto menu ||
 goto ${selected} ||
@@ -242,7 +242,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item  --key m menu                     M. back to menu
 choose --timeout 8000 --default ${pcbiosimgbootmode} selected
 iseq ${selected} menu && goto menu  ||
-iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot --drive 0x80 http://${booturl}${bootfile} && boot ||
+iseq ${selected} ${platform}sanbootimg && set keep-san 1 && sanboot http://${booturl}${bootfile} && boot ||
 iseq ${selected} ${platform}bootimgfdd && set diskmode fd && goto ${platform}bootimg ||
 iseq ${selected} ${platform}bootimghdd && set diskmode hd && goto ${platform}bootimg ||
 goto ${selected} ||
