@@ -68,8 +68,10 @@ set imgbootfile-default 0
 set vhdbootfile-default 0
 set iqnbootfile-default 0
 #设置wim启动默认方式
-set pcbioswimbootmode wimboot
+set pcbioswimbootmode wimboot #(不注入文件) 
+#set pcbioswimbootmode wimboot-inject #(注入文件)
 set efiwimbootbootmode wimboot
+#set efiwimbootbootmode wimboot-inject #(注入文件)
 #设置iso启动默认方式
 set pcbiosisobootmode memdiskiso
 set efiisobootmode ${platform}sanbootiso
@@ -445,12 +447,12 @@ boot
 :pcbiosinstall
 set net0/gateway 0.0.0.0
 set keep-san 1
-sanhook iscsi:${iscsiurl}::::${iqn}
+sanhook iscsi:${iscsiurl}::::${bootfile}
 boot
 
 :efiinstall
 set net0/gateway 0.0.0.0
 set keep-san 1
-sanhook iscsi:${iscsiurl}::::${iqn}
+sanhook iscsi:${iscsiurl}::::${bootfile}
 boot
 
