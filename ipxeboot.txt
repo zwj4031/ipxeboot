@@ -1,8 +1,8 @@
 #!ipxe
 ##############初级入门用户修改区域################
 #设置各种文件路径默认支持10个,自己修改
-set wim0 /mini.wim
-set wim1 /win10newpe64(20201101).wim
+set wim0 /boot/boot.wim
+set wim1 /mini.wim
 set wim2 /win10newpe64(20201101).wim
 set wim3 /dongzhangramos7.wim
 set wim4 /win10newpe64(20201101).wim
