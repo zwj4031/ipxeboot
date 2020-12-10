@@ -35,6 +35,8 @@ set vhd0 /ventoyx.vhd
 set vhd1 /ventoyx.vhd
 set iqn0 iqn.1991-05.com.microsoft:target1
 set iqn1 iqn.1991-05.com.microsoft:target2
+set xz0 /ramos.vhd.xz
+set xz1 /win10.vhd.xz
 ##############初级入门用户修改区域结束############
 
 ##############初级止步！中级进阶用户修改区域######
@@ -67,6 +69,7 @@ set isobootfile-default 2
 set imgbootfile-default 0
 set vhdbootfile-default 0
 set iqnbootfile-default 0
+set  xzbootfile-default 0
 #设置wim启动默认方式
 set pcbioswimbootmode wimboot #(不注入文件) 
 #set pcbioswimbootmode wimboot-inject #(注入文件)
@@ -84,6 +87,9 @@ set efivhdbootmode ${platform}sanbootvhd
 #设置IQN启动默认方式
 set pcbiosiqnbootmode ${platform}bootpe
 set efiiqnbootmode ${platform}install
+#设置xz[ramos]启动默认方式
+set pcbiosxzbootmode ${platform}ramos
+set efixzbootmode ${platform}ramos
 #设置第一个菜单的超时时间
 set ext-timeout 8000
 #设置第二个选择文件界面菜单的超时时间
@@ -120,6 +126,7 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item --key 1 iso            1.  Boot isofile
    item --key 2 img            2.  Boot imgfile
    item --key 3 vhd            3.  Boot vhdfile
+   item --key 4 xz             4.  Boot RamOS
    item --gap --             --------------------- Choose IscsiBoot --------------------------
    item --key i iqn            I.  Boot IQN
    item --gap --             --------------------- Advanced options ------------------------
@@ -167,6 +174,7 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
   iseq ${ext} img && goto ${platform}img ||
   iseq ${ext} vhd && goto ${platform}vhd ||
   iseq ${ext} iqn && goto ${platform}iqn ||
+  iseq ${ext} xz  && goto ${platform}xz ||
   goto ${ext} ||
  
 #wim类型文件启动菜单
@@ -328,6 +336,32 @@ iseq ${selected} efiinstall && goto ${platform}install ||
 iseq ${selected} menu && goto menu ||
 goto ${selected} ||
 
+
+
+#legacybios环境下的xz类型文件启动菜单
+:pcbiosxz
+menu  iPXE's Boot Menu xzfile: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 0 ${platform}ramos  0. Boot with Grub2 
+   item --key 3 menu              M. back to menu       
+  
+choose --timeout 8000 --default ${xzbootmode} selected
+iseq ${selected} ${platform}ramos && goto ${platform}ramos ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+
+#uefi环境下的xz类型文件启动菜单
+:efixz
+menu  iPXE's Boot Menu xzfile: ${bootfile}
+   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+   item --key 0 ${platform}ramos  0. Boot with Grub2 
+   item --key 3 menu              M. back to menu       
+  
+choose --timeout 8000 --default ${xzbootmode} selected
+iseq ${selected} ${platform}ramos && goto ${platform}ramos ||
+iseq ${selected} menu && goto menu ||
+goto ${selected} ||
+
 #下面是辅助菜单
 :retry
 console
@@ -456,3 +490,7 @@ set keep-san 1
 sanhook iscsi:${iscsiurl}::::${bootfile}
 boot
 
+:efiramos
+kernel http://${booturl}/app/wimboot/wimboot gui ||
+initrd -n ramos.xz http://${booturl}${bootfile} ||
+initrd -n bootx64.efi http://${booturl}/app/${platform}/grubfmx64.efi ||
