@@ -35,8 +35,8 @@ set vhd0 /ventoyx.vhd
 set vhd1 /ventoyx.vhd
 set iqn0 iqn.1991-05.com.microsoft:target1
 set iqn1 iqn.1991-05.com.microsoft:target2
-set xz0 /ramos.vhd.xz
-set xz1 /win10.vhd.xz
+set ramos0 /ramos.vhd.ramos
+set ramos1 /win10.vhd.ramos
 ##############初级入门用户修改区域结束############
 
 ##############初级止步！中级进阶用户修改区域######
@@ -338,7 +338,7 @@ goto ${selected} ||
 
 
 
-#legacybios环境下的xz类型文件启动菜单
+#legacybios环境下的ramos类型文件启动菜单
 :pcbiosramos
 menu  iPXE's Boot Menu xzfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
@@ -350,7 +350,7 @@ iseq ${selected} ${platform}ramos && goto ${platform}ramos ||
 iseq ${selected} menu && goto menu ||
 goto ${selected} ||
 
-#uefi环境下的xz类型文件启动菜单
+#uefi环境下的ramos类型文件启动菜单
 :efiramos
 menu  iPXE's Boot Menu xzfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
@@ -492,5 +492,6 @@ boot
 
 :efiramos
 kernel http://${booturl}/app/wimboot/wimboot gui ||
+initrd -n mapramosmem http://${booturl} ||
 initrd -n boot.ramos http://${booturl}${bootfile} ||
 initrd -n bootx64.efi http://${booturl}/app/${platform}/grub2toy.efi ||
