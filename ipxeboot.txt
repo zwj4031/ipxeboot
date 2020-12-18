@@ -87,9 +87,9 @@ set efivhdbootmode ${platform}sanbootvhd
 #设置IQN启动默认方式
 set pcbiosiqnbootmode ${platform}bootpe
 set efiiqnbootmode ${platform}install
-#设置xz[ramos]启动默认方式
-set pcbiosxzbootmode ${platform}ramos
-set efixzbootmode ${platform}ramos
+#设置ramos[ramos]启动默认方式
+set pcbiosramosbootmode ${platform}ramos
+set efiramosbootmode ${platform}ramos
 #设置第一个菜单的超时时间
 set ext-timeout 8000
 #设置第二个选择文件界面菜单的超时时间
@@ -126,7 +126,7 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item --key 1 iso            1.  Boot isofile
    item --key 2 img            2.  Boot imgfile
    item --key 3 vhd            3.  Boot vhdfile
-   item --key 4 xz             4.  Boot RamOS
+   item --key 4 ramos          4.  Boot RamOS
    item --gap --             --------------------- Choose IscsiBoot --------------------------
    item --key i iqn            I.  Boot IQN
    item --gap --             --------------------- Advanced options ------------------------
@@ -174,7 +174,7 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
   iseq ${ext} img && goto ${platform}img ||
   iseq ${ext} vhd && goto ${platform}vhd ||
   iseq ${ext} iqn && goto ${platform}iqn ||
-  iseq ${ext} xz  && goto ${platform}xz ||
+  iseq ${ext} ramos && goto ${platform}ramos ||
   goto ${ext} ||
  
 #wim类型文件启动菜单
@@ -339,7 +339,7 @@ goto ${selected} ||
 
 
 #legacybios环境下的xz类型文件启动菜单
-:pcbiosxz
+:pcbiosramos
 menu  iPXE's Boot Menu xzfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}ramos  0. Boot with Grub2 
@@ -351,7 +351,7 @@ iseq ${selected} menu && goto menu ||
 goto ${selected} ||
 
 #uefi环境下的xz类型文件启动菜单
-:efixz
+:efiramos
 menu  iPXE's Boot Menu xzfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}ramos  0. Boot with Grub2 
@@ -492,5 +492,5 @@ boot
 
 :efiramos
 kernel http://${booturl}/app/wimboot/wimboot gui ||
-initrd -n ramos.xz http://${booturl}${bootfile} ||
-initrd -n bootx64.efi http://${booturl}/app/${platform}/grubfmx64.efi ||
+initrd -n boot.ramos http://${booturl}${bootfile} ||
+initrd -n bootx64.efi http://${booturl}/app/${platform}/grub2toy.efi ||
