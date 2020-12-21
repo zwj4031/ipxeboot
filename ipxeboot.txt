@@ -41,20 +41,24 @@ set ramos1 /win10.vhd.gz
 ##############初级入门用户修改区域结束############
 
 ##############初级止步！中级进阶用户修改区域######
-##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要先效取消文件名前面的!)
+##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要生效请取消set前面的"#"号)
 ##看得懂脚本的可以射数个(不能为空~会蓝屏!)
-##0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)
-set inject0 winpeshl.ini
-##1.这个例子是winpeshl.ini负责启动下面这 个startup.bat
+##################################################
+
+#0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)---此项射入后名称固定
+set inject0 winpeshl_mini.ini #适合包里自带的mini.wim
+#set inject0 winpeshl_winxshell.ini #适合一键批处理生成的骨头版wim
+#1.这个例子是winpeshl.ini负责启动下面这 个startup.bat ---此项射入后名称固定
 set inject1 startup.bat
-##2.批处理startup.bat从下面的文档中提取正确服务器ip地址
+
+#2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
-##3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
-set inject3 ghost64.exe
-##4.射入一个又大又粗的工具包，自定义，比如射个64位的netcopy进去
-set inject4 netcopy64.exe
-##5.射入一个又大又粗的工具包，自定义，比如射个64位的CGI进去(备用)
-set inject5 cgi64.exe
+#3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
+set inject3 ghostx64.exe
+#4.射入一个又大又粗的工具包，自定义，比如射个64位的netcopy进去
+set inject4 netcopyx64.exe
+#5.射入一个又大又粗的工具包，自定义，比如射个64位的CGI进去(备用)
+set inject5 cgix64.exe
 ##############中级进阶用户修改区域结束###########
 
 ##############中级止步!高级秃顶用户修改区域######
@@ -414,8 +418,8 @@ iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inje
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
-iseq ${platform} efi && initrd -n ${inject0} http://${booturl}/app/inject/${inject0} || 
-iseq ${platform} efi && initrd -n ${inject1} http://${booturl}/app/inject/${inject1} || 
+iseq ${platform} efi && initrd -n winpeshl.ini http://${booturl}/app/inject/${inject0} || 
+iseq ${platform} efi && initrd -n startup.bat  http://${booturl}/app/inject/${inject1} || 
 iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 
 iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
 iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
