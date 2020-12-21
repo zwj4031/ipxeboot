@@ -412,14 +412,14 @@ boot || goto retry
 kernel http://${booturl}/app/wimboot/wimboot || goto retryip
 #前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
 #只是启动个pe用的上面这段话请忽略!!
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} ${inject0} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} ${inject1} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} winpeshl.ini || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} startup.bat || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inject2} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
 iseq ${platform} efi && initrd -n winpeshl.ini http://${booturl}/app/inject/${inject0} || 
-iseq ${platform} efi && initrd -n startup.bat  http://${booturl}/app/inject/${inject1} || 
+iseq ${platform} efi && initrd -n startup.bat http://${booturl}/app/inject/${inject1} || 
 iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 
 iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
 iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
