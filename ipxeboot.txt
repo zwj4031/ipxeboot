@@ -230,7 +230,7 @@ goto ${selected} ||
 menu  iPXE's Boot Menu isofile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 ${platform}isowithsanboot      0. Boot with sanboot
-   item --key 1 ${platform}isowithisoboot      1. Boot with isoboot
+   item --key 1 ${platform}isowithimgboot      1. Boot with imgboot
    item --key 2 ${platform}isowithgrub         2. Boot with grub (map)
    item --key 3 ${platform}isowithgrubmemrt    3. Boot with grub (map --mem --rt)
    item --key m  menu                 M. back to menu
@@ -459,9 +459,9 @@ initrd -n boot.iso http://${booturl}${bootfile} ||
 initrd -n bootx64.efi http://${booturl}/app/${platform}/grub2toy.efi ||
 boot
 
-:efiisowithisoboot
+:efiisowithimgboot
 initrd -n boot.iso http://${booturl}${bootfile} ||
-chain http://${booturl}/app/${platform}/isoboot.efi ||
+chain http://${booturl}/app/${platform}/imgboot.efi ||
 boot
 
 :pcbiosbootimg
