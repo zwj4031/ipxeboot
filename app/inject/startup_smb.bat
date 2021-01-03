@@ -4,10 +4,11 @@ if exist %root%\sysx64.exe start /w "" sysx64.exe
 MODE CON COLS=20 LINES=5
 :::创建符号链接，避免32位程序运行不正常
 mklink %temp%\cmd.exe  C:\windows\system32\cmd.exe
-
 %root%\pecmd.exe LINK %Desktop%\ghostx64,%root%\ghostx64.exe
 %root%\pecmd.exe LINK %Desktop%\netcopy网络同传,%root%\netcopyx64.exe
 %root%\pecmd.exe LINK %Desktop%\CGI一键还原,%root%\cgix64.exe
+%root%\pecmd.exe LINK %Desktop%\文件共享盘,explorer.exe,B:\
+%root%\pecmd.exe LINK %Desktop%\连接共享,cmd.exe,"/c net use B: \\%ip%\pxe "" /user:guest&explorer.exe B:\"
 cls
 %root%\pecmd.exe TEAM TEXT 提取服务器IP中，检测系统目录下有无ip.txt L204 T207 R1000 B768 $30^|wait 5000 
 if exist X:\windows\system32\ip.txt @echo 文件存在.准备提取...&&goto txtip
@@ -43,8 +44,6 @@ goto runtask
 exit
 :autoexec
 net use * /delete /y >nul
-%root%\pecmd.exe LINK %Desktop%\文件共享盘,explorer.exe,B:\
-%root%\pecmd.exe LINK %Desktop%\连接共享,cmd.exe,"/c net use B: \\%ip%\pxe "" /user:guest&explorer.exe B:\"
 %root%\pecmd.exe TEAM TEXT 正在连接共享\\%ip%\pxe为B盘....L204 T207 R1000 B768 $30^|wait 8000
 ::echo 正在连接共享\\%ip%\pxe为B盘 
 ::echo 如果很久连不上，请确认主机%ip%开了名称为pxe的共享!，可关闭本窗口!
