@@ -21,7 +21,7 @@ cd /d "%ProgramFiles(x86)%"
 %root%\pecmd.exe TEAM TEXT服务器ip地址为%ip% L204 T207 R1000 B768 $30^|wait 2000 
 echo 
 cls
-%root%\pecmd.exe TEAM TEXT 初始化网络.......L204 T207 R1000 B768 $30^|wait 2000 
+%root%\pecmd.exe TEAM TEXT 初始化网络.......L204 T207 R1000 B768 $30^|wait 5000 
 ipconfig /renew>nul
 goto autoexec
 exit
