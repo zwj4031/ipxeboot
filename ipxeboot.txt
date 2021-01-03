@@ -48,8 +48,10 @@ set ramos1 /win10.vhd.gz
 #0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)---此项射入后名称固定
 set inject0 winpeshl_mini.ini #适合包里自带的mini.wim
 #set inject0 winpeshl_winxshell.ini #适合一键批处理生成的骨头版wim
+
 #1.这个例子是winpeshl.ini负责启动下面这 个startup.bat ---此项射入后名称固定
 set inject1 startup.bat
+#set inject1 startup_smb.bat #开机后自动映射共享目录share到B盘
 
 #2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
@@ -425,7 +427,7 @@ iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inje
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
 iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
-iseq ${platform} efi && initrd -n modex64.exe http://${booturl}/app/inject/modex64.exe || #补mode.com 有问题可删除!
+iseq ${platform} efi && initrd -n sysx64.exe http://${booturl}/app/inject/sysx64.exe || #补mode.com等缺少的文件 有问题可删除!
 iseq ${platform} efi && initrd -n winpeshl.ini http://${booturl}/app/inject/${inject0} || 
 iseq ${platform} efi && initrd -n startup.bat http://${booturl}/app/inject/${inject1} || 
 iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 

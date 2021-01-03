@@ -38,8 +38,10 @@ for /f "tokens=1,2 delims= " %%i in ('echo %%b')  do set ip=%%i
 )
 goto runtask
 
-
 :autoghost
+net use B: \\%ip%\share "" /user:letmefuckfuck
+exit
+:autoghost1
 ping 127.0 -n 5 >nul
 X:\windows\system32\pecmd.exe kill ghostx64.exe >nul
 cd /d "X:\windows\system32" >nul
