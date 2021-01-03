@@ -132,9 +132,8 @@ console --picture http://${booturl}/app/config/ipxe.png --left 32 --right 32 --t
    item --key 2 img            2.  Boot Imgfile
    item --key 3 vhd            3.  Boot Vhdfile
    item --key 4 ramos          4.  Boot RamOS
+   item --gap --             --------------------- Choose IscsiBoot --------------------------
    item --key i iqn            I.  Boot IQN
-   item --gap --             --------------------- Advanced tools -----------------------------
-   item --key b burnimg        B.  Burn images
    item --gap --             --------------------- Advanced options ------------------------
    item --key r reload         R.  Reload iPXE Menu
    item --key c config   	   Configure settings                                   -- c
@@ -151,12 +150,9 @@ iseq ${selected} shell && shell ||
 iseq ${selected} reboot && reboot ||
 iseq ${selected} poweroff && poweroff ||
 iseq ${selected} exit && exit ||
-iseq ${selected} burnimg && goto burnimg ||
 iseq ${selected} reload && chain http://${booturl}${scriptfile} ||
 iseq ${selected} grubfm && kernel http://${booturl}/grubfm.elf ||
 iseq ${selected} ${platform}boot && goto ${platform}boot ||
-
-
  
 
 #选项启动文件类型后的子菜单(列表)
@@ -398,8 +394,7 @@ set booturl ${proxydhcp/next-server} && goto start
 :config
   config
   goto start
-  
-####################################以下是执行启动过程####################################
+##################以下是执行启动过程##################
 
 :wimboot
 #假如取文件失败就换个地址
@@ -528,31 +523,3 @@ initrd http://${booturl}${bootfile} ||
 initrd http://${booturl}/app/${platform}/512 ||
 imgargs grub.exe --config-file="map --mem --top (rd)+1 (hd0);map (hd0) (hd1);map --hook;root (hd0,0);chainloader /bootmgr;" ||
 boot
-####################################以上是执行启动过程####################################
-
-##################高级工具burnimg##################  
-:burnimg
-#系统设置#
-set burnpath http://${booturl}/ctos/boot/ #kernel和initrd启动文件所在路径
-set kernel vmlinuz-4.13.0-11-generic #kernel名称
-set initrd initrd.img-4.13.0-11-generic #initrd名称
-set share //${booturl}/images             #SMB共享目录，根目录必须有img镜像    
-set nfsroot ${booturl}:/S/ipxeboot/ctos #注意大小写                               
-#系统设置结束#
-#burn工具菜单
-menu  iPXE's Boot Menu 
-   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
-   item --key 0 CTOS_STD_x64_20180426.img        0. Burn CTOS_STD_x64_20180426.img
-   item --key 1 CTOS_STD_x64_20210101.img        1. Burn CTOS_STD_x64_20210101.img
-   item --key 2 lede.img                         2. Burn lede.img
-   item --key m menu                             M. back to menu       
-choose --timeout 80000000 --default 20180426 selected   #倒计时自动选择菜单，风险！
-set img ${selected} && goto burn ||
-goto ${selected} ||
-
-:burn
-echo Burn ${img}........................
-kernel ${burnpath}${kernel} showmounts toram root=/dev/nfs initrd=${initrd} netboot=nfs nfsroot=${nfsroot} share=${share} img=${img} ip=dhcp ipv6.disable=1 ro splash biosdevname=0 ||
-initrd ${burnpath}${initrd} ||
-boot
-##################高级工具##################  
