@@ -1,15 +1,15 @@
 @echo off
 set root=X:\windows\system32
 if exist %root%\sysx64.exe start /w "" sysx64.exe
-MODE CON COLS=56 LINES=10
+MODE CON COLS=20 LINES=5
 :::创建符号链接，避免32位程序运行不正常
 mklink %temp%\cmd.exe  C:\windows\system32\cmd.exe
 
-
 %root%\pecmd.exe LINK %Desktop%\ghostx64,%root%\ghostx64.exe
-%root%\pecmd.exe LINK %Desktop%\netcopyx64,%root%\netcopyx64.exe
+%root%\pecmd.exe LINK %Desktop%\netcopy网络同传,%root%\netcopyx64.exe
+%root%\pecmd.exe LINK %Desktop%\CGI一键还原,%root%\cgix64.exe
 cls
-@echo 检测系统目录下是否存在ip.txt
+%root%\pecmd.exe TEAM TEXT 提取服务器IP中，检测系统目录下有无ip.txt L204 T207 R1000 B768 $30^|wait 5000 
 if exist X:\windows\system32\ip.txt @echo 文件存在.准备提取...&&goto txtip
 if not exist X:\windows\system32\ip.txt @echo 文件不存在.dhcp作为服务器地址...&&goto dhcpip
 
@@ -17,8 +17,12 @@ if not exist X:\windows\system32\ip.txt @echo 文件不存在.dhcp作为服务器地址...&&
 :::检测服务器文件并退出
 :runtask
 cd /d "%ProgramFiles(x86)%"
-echo 取得ip地址为%ip%
-goto autoghost
+%root%\pecmd.exe TEAM TEXT服务器ip地址为%ip% L204 T207 R1000 B768 $30^|wait 2000 
+echo 
+cls
+%root%\pecmd.exe TEAM TEXT 初始化网络.......L204 T207 R1000 B768 $30^|wait 2000 
+ipconfig /renew>nul
+goto autoexec
 exit
 
 
@@ -27,8 +31,7 @@ exit
 cd /d X:\windows\system32
 for /f %%a in (ip.txt) do set ip=%%a
 echo %ip%
-echo 即将开始克隆或释放其它软件……
-ping 127.0 -n 5 >nul
+%root%\pecmd.exe TEAM TEXT 即将开始克隆或释放其它软件…… L204 T207 R1000 B768 $30^|wait 3000 
 goto runtask
 
 :::从dhcp中提取服务器地址
@@ -37,15 +40,20 @@ for /f "tokens=1,2 delims=:" %%a in ('Ipconfig /all^|find /i "DHCP 服务器 . . . 
 for /f "tokens=1,2 delims= " %%i in ('echo %%b')  do set ip=%%i
 )
 goto runtask
-
-:autoghost
-net use B: \\%ip%\share "" /user:letmefuckfuck
 exit
-:autoghost1
-ping 127.0 -n 5 >nul
-X:\windows\system32\pecmd.exe kill ghostx64.exe >nul
-cd /d "X:\windows\system32" >nul
-ghostx64.exe -ja=mousedos -batch >nul
-if errorlevel 1 goto autoghost
-exit
+:autoexec
+net use * /delete /y >nul
+%root%\pecmd.exe LINK %Desktop%\文件共享盘,explorer.exe,B:\
+%root%\pecmd.exe LINK %Desktop%\连接共享,cmd.exe,"/c net use B: \\%ip%\pxe "" /user:guest&explorer.exe B:\"
+%root%\pecmd.exe TEAM TEXT 正在连接共享\\%ip%\pxe为B盘....L204 T207 R1000 B768 $30^|wait 8000
+::echo 正在连接共享\\%ip%\pxe为B盘 
+::echo 如果很久连不上，请确认主机%ip%开了名称为pxe的共享!，可关闭本窗口!
+net use B: \\%ip%\pxe "" /user:guest
+if "%errorlevel%"=="0" ( 
+ %root%\pecmd.exe TEAM TEXT 连接服务器成功！准备进入桌面！ L204 T207 R1000 B568 $30^|wait 2000
+ exit
+) else (
+ %root%\pecmd.exe TEAM TEXT 连接服务器超时！如果连不上，请确认主机开了名称为pxe的共享! ！ L204 T207 R1000 B768 $30^|wait 5000
+goto runtask
+)
 

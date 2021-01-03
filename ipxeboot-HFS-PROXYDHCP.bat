@@ -24,6 +24,7 @@ echo start=1
 echo proxydhcp=1
 echo httpd=0
 echo bind=1
+echo smb=1
 echo poolsize=998
 echo root=%~dp0
 echo filename=ipxe.bios

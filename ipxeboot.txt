@@ -46,14 +46,13 @@ set ramos1 /win10.vhd.gz
 ##################################################
 
 #0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)---此项射入后名称固定
-set inject0 winpeshl_mini.ini #适合包里自带的mini.wim
+set inject0 winpeshl.ini #适合包里自带的mini.wim和其它一般PE
 #set inject0 winpeshl_winxshell.ini #适合一键批处理生成的骨头版wim
 
-#1.这个例子是winpeshl.ini负责启动下面这 个startup.bat ---此项射入后名称固定
-set inject1 startup.bat
-#set inject1 startup_smb.bat #开机后自动映射共享目录share到B盘
+#默认批处理startup.bat可修改
+#需要开机后smb共享的，找到从/app/inject/ip.txt文件把你共享服务器的ip填进去! 默认共享本目录名称为PXE
+#使用共享功能，至少要把本目录也就是ipxeboot权限设置为everyone可读!
 
-#2.批处理startup.bat从下面的文档中提取正确服务器ip地址
 set inject2 ip.txt
 #3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
 set inject3 ghostx64.exe
@@ -79,9 +78,9 @@ set iqnbootfile-default 0
 set ramosbootfile-default 0
 #设置wim启动默认方式
 set pcbioswimbootmode wimboot #(不注入文件) 
-#set pcbioswimbootmode wimboot-inject #(注入文件)
+#set pcbioswimbootmode startup.bat #(注入默认的startup.bat文件)
 set efiwimbootmode wimboot
-#set efiwimbootmode wimboot-inject #(注入文件)
+#set efiwimbootmode  startup.bat #(注入默认的startup.bat文件)
 #设置iso启动默认方式
 set pcbiosisobootmode memdiskiso
 set efiisobootmode ${platform}isowithsanboot
@@ -180,7 +179,7 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
   set sel  ${selected}
   set bootfile ${${sel}}
   iseq ${selected} menu && goto menu ||
-  iseq ${ext} wim && goto ${platform}wim ||
+  iseq ${ext} wim && goto wim ||
   iseq ${ext} iso && goto ${platform}iso ||
   iseq ${ext} img && goto ${platform}img ||
   iseq ${ext} vhd && goto ${platform}vhd ||
@@ -189,32 +188,21 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
   goto ${ext} ||
  
 #wim类型文件启动菜单
-:pcbioswimboot
+:wim
 menu  iPXE's Boot Menu wimfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 wimboot                0. Boot with wimboot 
-   item --key 1 wimboot-inject         1. Boot with wimboot (inject files)
+   item --key 1 startup.bat            1. Boot with wimboot (inject files:startup.bat--> Netghost])
+   item --key 2 startup_smb.bat        2. Boot with wimboot (inject files:startup_smb.bat--> SMB)
    item --key 3 menu                   M. back to menu       
-  
+
 choose --timeout 8000 --default ${${platform}wimbootmode} selected
 iseq ${selected} wimboot && goto wimboot ||
-iseq ${selected} wimboot-inject && goto wimboot-inject ||
 iseq ${selected} menu && goto menu ||
+set inject1 ${selected} && goto wimboot-inject ||
 goto ${selected} ||
-  
-:efiwimboot
-menu  iPXE's Boot Menu wimfile: ${bootfile}
-   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
-   item --key 0 wimboot                0. Boot with wimboot 
-   item --key 1 wimboot-inject         1. Boot with wimboot (inject files)
-   item --key 3 menu                   M. back to menu       
-  
-choose --timeout 8000 --default ${${platform}wimbootmode} selected
-iseq ${selected} wimboot && goto wimboot ||
-iseq ${selected} wimboot-inject && goto wimboot-inject ||
-iseq ${selected} menu && goto menu ||
-goto ${selected} ||
-    
+ 
+
  
 #legacybios环境下的iso类型文件启动菜单
 :pcbiosiso

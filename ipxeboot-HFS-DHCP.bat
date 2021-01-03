@@ -23,6 +23,7 @@ echo [dhcp]
 echo start=1
 echo proxydhcp=0
 echo httpd=0
+echo smb=1
 echo bind=1
 echo poolsize=998
 echo root=%~dp0
