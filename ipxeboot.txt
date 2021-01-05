@@ -171,15 +171,18 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
  
 #wim类型文件启动菜单
 :wim
-menu  iPXE's Boot Menu wimfile: ${bootfile}
-   item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
+menu  iPXE's Boot Menu wimfile: ${bootfile} ${platform} 
+   item --gap --             ------------------------winpeshl:${winpeshl}-----------------------------
    item --key 0 wimboot                0. Boot with wimboot 
    item --key 1 startup.bat            1. Boot with wimboot (inject files:startup.bat--> NetGhost])
    item --key 2 startup_smb.bat        2. Boot with wimboot (inject files:startup_smb.bat--> SMB)
-   item --key 3 menu                   M. back to menu       
+   item --key 3 ${winpeshl}            3. Switch ${winpeshl} (winpeshl:${winpeshl}) 
+   item --key m menu                   M. Back to menu       
 choose --timeout 8000 --default ${${platform}wimbootmode} selected
 iseq ${selected} wimboot && goto wimboot ||
 iseq ${selected} menu && goto menu ||
+iseq ${selected} winpeshl.ini && set winpeshl winpeshl_winxshell.ini && goto wim ||
+iseq ${selected} winpeshl_winxshell.ini && set winpeshl winpeshl.ini && goto wim ||
 set startup ${selected} && goto wimboot-inject ||
 goto ${selected} ||
   
@@ -190,7 +193,7 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --key 0 ${platform}isowithsanboot  0. Boot with sanboot 
    item --key 1 pcbiosisowithmemdisk       1. Boot with memdisk
    item --key 2 pcbiosisowithgrub          2. Boot with grub     
-   item --key 3 menu                   M. back to menu       
+   item --key m menu                   M. Back to menu       
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}isowithsanboot && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}isowithgrub && goto ${platform}isowithgrub ||
