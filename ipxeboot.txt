@@ -4,56 +4,38 @@
 set wim0 /mini.wim
 set wim1 /boot.wim
 set wim2 /win10newpe64(20201101).wim
-set wim3 /dongzhangramos7.wim
-set wim4 /win10newpe64(20201101).wim
-set wim5 /win10newpe64(20201101).wim
-set wim6 /win10newpe64(20201101).wim
-set wim7 /win10newpe64(20201101).wim
-set wim8 /win10newpe64(20201101).wim
-set wim9 /win10newpe64(20201101).wim
 set iso0 /grubfm_multiarch.iso
 set iso1 /xp.iso
 set iso2 /netpe_multiarch.iso
-set iso3 /YlmF_Win2003_R2.iso
-set iso4 /Win10_14393_PE_x86&x64.iso
-set iso5 /Win10_14393_PE_x86&x64.iso
-set iso6 /Win10_14393_PE_x86&x64.iso
-set iso7 /Win10_14393_PE_x86&x64.iso
-set iso8 /Win10_14393_PE_x86&x64.iso
-set iso9 /Win10_14393_PE_x86&x64.iso
 set img0 /mhdd.img
 set img1 /mhdd.img
 set img2 /maxdos9.img
 set img3 /6086858.img
-set img4 /mhdd.img
-set img5 /mhdd.img
-set img6 /mhdd.img
-set img7 /mhdd.img
-set img8 /mhdd.img
-set img9 /mhdd.img
 set vhd0 /ventoyx.vhd
 set vhd1 /ventoyx.vhd
 set iqn0 iqn.1991-05.com.microsoft:target1
 set iqn1 iqn.1991-05.com.microsoft:target2
 set ramos0 /ramos.vhd.ramos
 set ramos1 /win10.vhd.gz
-
 ##############初级入门用户修改区域结束############
-
 ##############初级止步！中级进阶用户修改区域######
-##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(要生效请取消set前面的"#"号)
+##射入pe的文件暂时可射5个，5个文件在/app/inject目录下(不能为空~会蓝屏!)
 ##看得懂脚本的可以射数个(不能为空~会蓝屏!)
 ##################################################
-
-#0.所有的pe都有这个启动文件winpeshl.ini  (一般人视角，一般pe)---此项射入后名称固定
-set inject0 winpeshl.ini #适合包里自带的mini.wim和其它一般PE
-#set inject0 winpeshl_winxshell.ini #适合一键批处理生成的骨头版wim
-
-#默认批处理startup.bat可修改
-#需要开机后smb共享的，找到从/app/inject/ip.txt文件把你共享服务器的ip填进去! 默认共享本目录名称为PXE
-#使用共享功能，至少要把本目录也就是ipxeboot权限设置为everyone可读!
-
-set inject2 ip.txt
+#默认射入1：所有正常的pe都有winpeshl.ini  (一般人视角，一般pe)---此项射入后名称固定
+# 备用了一个winpeshl_winxshell.ini #适合一键批处理生成的骨头版wim
+set winpeshl winpeshl.ini
+#set winpeshl winpeshl_winxshell.ini
+# 默认射入2：默认批处理startup.bat,可修改
+set startup startup.bat
+# 选择smb共享的，需要默认共享本目录名称为PXE 
+# 使用共享功能，至少要把本目录也就是ipxeboot权限设置为everyone可读!
+# 以下是自定义射入的文件
+set inject0 0.exe
+#3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
+set inject1 1.exe
+#3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
+set inject2 2.exe
 #3.射入一个又大又粗的工具包，自定义，比如射个64位的ghost进去
 set inject3 ghostx64.exe
 #4.射入一个又大又粗的工具包，自定义，比如射个64位的netcopy进去
@@ -192,18 +174,15 @@ iseq ${selected} ${platform}boot && goto ${platform}boot ||
 menu  iPXE's Boot Menu wimfile: ${bootfile}
    item --gap --             ------------------------${platform} boot:${bootfile} -----------------------------
    item --key 0 wimboot                0. Boot with wimboot 
-   item --key 1 startup.bat            1. Boot with wimboot (inject files:startup.bat--> Netghost])
+   item --key 1 startup.bat            1. Boot with wimboot (inject files:startup.bat--> NetGhost])
    item --key 2 startup_smb.bat        2. Boot with wimboot (inject files:startup_smb.bat--> SMB)
    item --key 3 menu                   M. back to menu       
-
 choose --timeout 8000 --default ${${platform}wimbootmode} selected
 iseq ${selected} wimboot && goto wimboot ||
 iseq ${selected} menu && goto menu ||
-set inject1 ${selected} && goto wimboot-inject ||
+set startup ${selected} && goto wimboot-inject ||
 goto ${selected} ||
- 
-
- 
+  
 #legacybios环境下的iso类型文件启动菜单
 :pcbiosiso
 menu  iPXE's Boot Menu isofile: ${bootfile}
@@ -212,7 +191,6 @@ menu  iPXE's Boot Menu isofile: ${bootfile}
    item --key 1 pcbiosisowithmemdisk       1. Boot with memdisk
    item --key 2 pcbiosisowithgrub          2. Boot with grub     
    item --key 3 menu                   M. back to menu       
-  
 choose --timeout 8000 --default ${pcbiosisobootmode} selected
 iseq ${selected} ${platform}isowithsanboot && set keep-san 1 && sanboot --no-describe http://${booturl}${bootfile} ||
 iseq ${selected} ${platform}isowithgrub && goto ${platform}isowithgrub ||
@@ -300,7 +278,6 @@ iseq ${selected} menu && goto menu  ||
 goto ${selected} ||
 #启动vhd结束 
 
-
 #iscsi文件启动菜单
 :pcbiosiqn
 menu  iPXE's Boot Menu boot: ${bootfile}
@@ -335,8 +312,6 @@ iseq ${selected} efibootwin && set keep-san 1 && sanboot iscsi:${iscsiurl}::::${
 iseq ${selected} efiinstall && goto ${platform}install ||
 iseq ${selected} menu && goto menu ||
 goto ${selected} ||
-
-
 
 #legacybios环境下的ramos类型文件启动菜单
 :pcbiosramos
@@ -406,27 +381,28 @@ boot || goto retry
 :wimboot-inject
 #假如取文件失败就换个地址
 kernel http://${booturl}/app/wimboot/wimboot || goto retryip
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/modex64.exe modex64.exe || #补mode.com 有问题可删除!
+iseq ${platform} pcbios && initrd http://${booturl}/ srverip=${booturl} || #射入IP地址 有问题可删除!
+iseq ${platform} efi && initrd -n sysx64.exe http://${booturl}/app/inject/sysx64.exe || #补mode.com等缺少的文件 有问题可删除!
+iseq ${platform} efi && initrd -n serverip=${booturl} http://${booturl}/ || #射入IP地址 有问题可删除!
 #前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
 #只是启动个pe用的上面这段话请忽略!!
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/modex64.exe modex64.exe || #补mode.com 有问题可删除!
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject0} winpeshl.ini || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject1} startup.bat || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject2} ${inject2} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject3} ${inject3} || 
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject4} ${inject4} ||
-iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${inject5} ${inject5} ||
-iseq ${platform} efi && initrd -n sysx64.exe http://${booturl}/app/inject/sysx64.exe || #补mode.com等缺少的文件 有问题可删除!
-iseq ${platform} efi && initrd -n winpeshl.ini http://${booturl}/app/inject/${inject0} || 
-iseq ${platform} efi && initrd -n startup.bat http://${booturl}/app/inject/${inject1} || 
-iseq ${platform} efi && initrd -n ${inject2} http://${booturl}/app/inject/${inject2} || 
-iseq ${platform} efi && initrd -n ${inject3} http://${booturl}/app/inject/${inject3} || 
-iseq ${platform} efi && initrd -n ${inject4} http://${booturl}/app/inject/${inject4} || 
-iseq ${platform} efi && initrd -n ${inject5} http://${booturl}/app/inject/${inject5} || 
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${startup} startup.bat || 
+iseq ${platform} efi && initrd -n startup.bat http://${booturl}/app/inject/${startup} ||
+iseq ${platform} pcbios && initrd http://${booturl}/app/inject/${winpeshl} winpeshl.ini || 
+iseq ${platform} efi && initrd -n winpeshl.ini http://${booturl}/app/inject/${winpeshl} ||
+#以下是自定义射入的文件
+initrd http://${booturl}/app/inject/${inject0} || 
+initrd http://${booturl}/app/inject/${inject1} || 
+initrd http://${booturl}/app/inject/${inject2} || 
+initrd http://${booturl}/app/inject/${inject3} || 
+initrd http://${booturl}/app/inject/${inject4} ||
+initrd http://${booturl}/app/inject/${inject5} ||
 #在bios和efi不同环境取相应的文件
 iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
 iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
-initrd http://${booturl}/app/wimboot/BCD  BCD ||
-initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+initrd http://${booturl}/app/wimboot/BCD BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi boot.sdi ||
 iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
 iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
 boot || goto retry
