@@ -9,7 +9,7 @@ set /a a-=1
 set /a b-=1
 mode con: cols=%a% lines=%b% 
 if %a% geq 16 if %b% geq 1 goto re
-#MODE CON COLS=15 LINES=5
+:::::MODE CON COLS=15 LINES=5
 :::创建符号链接，避免32位程序运行不正常
 mklink %temp%\cmd.exe  C:\windows\system32\cmd.exe
 %root%\pecmd.exe LINK %Desktop%\ghostx64,%root%\ghostx64.exe
