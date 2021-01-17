@@ -1,0 +1,46 @@
+#!ipxe
+iseq ${quiet} 1 && set wimbootcmd quiet && console --x ${x} -y ${y} && cpair --foreground 0 0 || #静默背景
+goto ${bootmode} 
+:wimboot
+#假如取文件失败就换个地址
+kernel http://${booturl}/app/wimboot/wimboot ${wimbootcmd} || goto retryip
+#在bios和efi不同环境取相应的文件
+iseq ${platform} pcbios  && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+iseq ${platform} efi  && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
+initrd http://${booturl}/app/wimboot/BCD  BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi   boot.sdi ||
+cpair --foreground 2 0 && console --x ${x} -y ${y} --picture ${themes}/${ld} --left 32 --right 32 --top 32 --bottom 48 || #loading
+iseq ${platform} pcbios  && initrd http://${booturl}${bootfile} boot.wim ||
+iseq ${platform} efi && initrd -n boot.wim http://${booturl}${bootfile} ||
+boot ||
+iseq ${selected} menu && chain ${prefix}/init.ipxe  ||
+:wimboot-inject
+#假如取文件失败就换个地址
+kernel http://${booturl}/app/wimboot/wimboot ${wimbootcmd} || goto retryip
+#在bios和efi不同环境取相应的启动文件
+iseq ${platform} pcbios && initrd http://${booturl}/app/wimboot/bootmgr  bootmgr ||
+iseq ${platform} efi && initrd -n bootx64.efi http://${booturl}/app/wimboot/bootmgfw.efi ||
+initrd http://${booturl}/app/wimboot/BCD BCD ||
+initrd http://${booturl}/app/wimboot/boot.sdi boot.sdi ||
+#前方高能！射入的文件最终会出现在你所有pe的X:\windows\system32目录下，不要再问来问去怎么启动pxeautorun.txt了！
+#只是启动个pe用的上面这段话请忽略!!
+initrd -n startup.bat http://${booturl}/app/inject/${injectdir}/${startup} startup.bat ||
+initrd -n winpeshl.ini http://${booturl}/app/inject/${injectdir}/${winpeshl} winpeshl.ini ||
+#以下是同传网克用的核心文件，不需要可以用#注释掉
+initrd http://${booturl}/app/inject/default/sysx64.exe sysx64.exe || #是个自解压包，补mode.com wget aira2等缺少的文件 有问题可删除!
+initrd http://${booturl}/app/inject/default/ghostx64.exe ghostx64.exe || #netghost文件 有问题可删除!
+initrd http://${booturl}/app/inject/default/netcopyx64.exe netcopyx64.exe || #netcopy网络同传 有问题可删除!
+initrd http://${booturl}/app/inject/default/cgix64.exe cgix64.exe || #netcopy网络同传 有问题可删除!
+iseq ${platform} pcbios && initrd http://${booturl}/ @ip=${booturl}@job=${job} || #射入IP地址 有问题可删除!
+iseq ${platform} efi && initrd -n @ip=${booturl}@job=${job} http://${booturl}/ || #射入IP地址 有问题可删除!
+#以下是自定义射入的文件
+isset ${inject1} && initrd http://${booturl}/app/inject/${injectdir}/${inject1} ${inject1} || 
+isset ${inject2} && initrd http://${booturl}/app/inject/${injectdir}/${inject2} ${inject2} || 
+isset ${inject3} && initrd http://${booturl}/app/inject/${injectdir}/${inject3} ${inject3} || 
+isset ${inject4} && initrd http://${booturl}/app/inject/${injectdir}/${inject4} ${inject4} ||
+isset ${inject5} && initrd http://${booturl}/app/inject/${injectdir}/${inject5} ${inject5} ||
+#在bios和efi不同环境给相应的PE 件改名    
+cpair --foreground 2 0 && console --x ${x} -y ${y} --picture ${themes}/${ld} --left 32 --right 32 --top 32 --bottom 48 || #loading
+initrd -n boot.wim http://${booturl}${bootfile} boot.wim ||
+boot ||
+iseq ${selected} menu && chain ${prefix}/init.ipxe  ||
