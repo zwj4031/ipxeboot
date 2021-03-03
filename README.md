@@ -5,3 +5,4 @@ IPXE文件管理器!支持启动WIM、ISO、IMG、RAMOS、ISCSI的网启模板(B
 ipxe.bios和ipxe.efi为tinypxe或pxelinux菜单调用专用文件(原版无嵌入脚本)
 
 ipxeboot.pcbios和ipxeboot.efi为通用启动文件，各种网启启动器通用(群晖&openwrt等)
+项目已经移至https://github.com/zwj4031/ipxefm
